@@ -1,5 +1,6 @@
 """
-Grafo direcionado implementado sem uso de bibliotecas externas.
+Grafo direcionado implementado sem uso de bibliotecas externas. Contém métodos de busca e ordenação topológica. Cada vértice representa um pacote e cada aresta direcionada representa uma dependência entre pacotes.
+A implementação é baseada em listas de adjacência para armazenar sucessores e predecessores, permitindo consultas eficientes sobre dependências e pré-requisitos. O grafo suporta a adição de vértices e arestas, evitando duplicações e garantindo a integridade das relações de dependência.
 """
 
 class Graph:
@@ -47,3 +48,31 @@ class Graph:
 
     def __repr__(self):
         return f"Graph(V={len(self.vertices)}, E={len(self.arestas)})"
+
+    def kahn(self):
+        """
+        Implementa o algoritmo de Kahn para ordenação topológica.
+        Retorna uma lista de vértices em ordem topológica se o grafo for acíclico.
+        Caso contrário, retorna None indicando a presença de ciclos.
+        """
+        graus = {v: self.grau_entrada(v) for v in self.vertices}
+        fila = [v for v in self.vertices if graus[v] == 0]
+        ordem = []
+        camadas = []
+
+        while fila:
+            camada_atual = list(fila)
+            camadas.append(camada_atual)
+
+            proximo_fila = []
+            for u in camada_atual:
+                ordem.append(u)
+                for v in self.vizinhos(u):
+                    graus[v] -= 1
+                    if graus[v] == 0:
+                        proximo_fila.append(v)
+            fila = proximo_fila
+
+        if(len(ordem) == len(self.vertices)):
+            return True, ordem, camadas
+        return False, None, None

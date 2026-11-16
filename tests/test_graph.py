@@ -10,6 +10,7 @@ from src.graph.graph import Graph
 
 class TestGraphEstrutura(unittest.TestCase):
 
+    #Inicialização e teste da estrutura inicial do grafo
     def setUp(self):
         self.g = Graph()
 
@@ -133,6 +134,89 @@ class TestGraphEstrutura(unittest.TestCase):
         self.assertNotIn("fantasma", self.g.vertices)
         self.assertNotIn("fantasma", self.g.predecessores)
 
+
+    # TESTES DO ALGORITMO DE KAHN (ORDENAÇÃO TOPOLÓGICA)
+
+    def test_kahn_cadeia_linear(self):
+        """Testa ordenação de dependências lineares A -> B -> C."""
+        self.g.add_aresta("libz", "libpng")
+        self.g.add_aresta("libpng", "app")
+
+        sucesso, ordem, camadas = self.g.kahn()
+
+        self.assertTrue(sucesso)
+        self.assertEqual(ordem, ["libz", "libpng", "app"])
+        self.assertEqual(camadas, [["libz"], ["libpng"], ["app"]])
+
+    def test_kahn_paralelismo_camadas(self):
+        """
+        Testa dependências convergentes com camadas paralelas:
+        Camada 1: libz e libcore (grau 0)
+        Camada 2: libpng (depende de libz) e libnet (depende de libcore)
+        Camada 3: browser (depende de libpng e libnet)
+        """
+        self.g.add_aresta("libz", "libpng")
+        self.g.add_aresta("libcore", "libnet")
+        self.g.add_aresta("libpng", "browser")
+        self.g.add_aresta("libnet", "browser")
+
+        sucesso, ordem, camadas = self.g.kahn()
+
+        self.assertTrue(sucesso)
+        self.assertEqual(len(camadas), 3)
+        # Camada 1 tem que ter libz e libcore
+        self.assertEqual(set(camadas[0]), {"libz", "libcore"})
+        # Camada 2 tem que ter libpng e libnet
+        self.assertEqual(set(camadas[1]), {"libpng", "libnet"})
+        # Camada 3 tem que ter o browser
+        self.assertEqual(camadas[2], ["browser"])
+
+        # Garante que cada pré-requisito aparece antes do seu dependente na ordem
+        self.assertLess(ordem.index("libz"), ordem.index("libpng"))
+        self.assertLess(ordem.index("libcore"), ordem.index("libnet"))
+        self.assertLess(ordem.index("libpng"), ordem.index("browser"))
+        self.assertLess(ordem.index("libnet"), ordem.index("browser"))
+
+    def test_kahn_componentes_desconexas(self):
+        """Testa grafos com pacotes totalmente independentes entre si."""
+        self.g.add_aresta("pkgA", "pkgB")
+        self.g.add_aresta("pkgC", "pkgD")
+
+        sucesso, ordem, camadas = self.g.kahn()
+
+        self.assertTrue(sucesso)
+        self.assertEqual(len(ordem), 4)
+        self.assertLess(ordem.index("pkgA"), ordem.index("pkgB"))
+        self.assertLess(ordem.index("pkgC"), ordem.index("pkgD"))
+
+    def test_kahn_falha_com_ciclo(self):
+        """Testa se Kahn detecta ciclo e recusa ordenação completa (A -> B -> C -> A)."""
+        self.g.add_aresta("A", "B")
+        self.g.add_aresta("B", "C")
+        self.g.add_aresta("C", "A")
+
+        sucesso, ordem, camadas = self.g.kahn()
+
+        self.assertFalse(sucesso, "Kahn deve retornar False na presença de ciclo")
+        self.assertIsNone(ordem)
+        self.assertIsNone(camadas)
+
+    def test_kahn_falha_com_auto_laco(self):
+        """Testa se pacote dependendo de si mesmo (A -> A) é detectado como ciclo."""
+        self.g.add_aresta("loop", "loop")
+
+        sucesso, ordem, camadas = self.g.kahn()
+
+        self.assertFalse(sucesso)
+        self.assertIsNone(ordem)
+        self.assertIsNone(camadas)
+
+    def test_kahn_grafo_vazio(self):
+        """Testa Kahn em grafo sem nenhum vértice."""
+        sucesso, ordem, camadas = self.g.kahn()
+        self.assertTrue(sucesso)
+        self.assertEqual(ordem, [])
+        self.assertEqual(camadas, [])
 
 if __name__ == "__main__":
     unittest.main()
