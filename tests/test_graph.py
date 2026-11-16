@@ -266,5 +266,47 @@ class TestGraphEstrutura(unittest.TestCase):
         self.assertIn("M", ciclo)
         self.assertIn("N", ciclo)
 
+    # ==========================================
+    # TESTES DE DEPENDENTES TRANSITIVOS (BFS)
+    # ==========================================
+
+    def test_dependentes_transitivos_cadeia_linear(self):
+        """Se A -> B -> C, desinstalar A deve afetar B e C."""
+        self.g.add_aresta("libbase", "libutil")
+        self.g.add_aresta("libutil", "app")
+
+        afetados = self.g.dependentes_transitivos("libbase")
+        self.assertEqual(afetados, {"libutil", "app"})
+
+        # Desinstalar app não deve afetar ninguém
+        afetados_app = self.g.dependentes_transitivos("app")
+        self.assertEqual(afetados_app, set())
+
+    def test_dependentes_transitivos_convergencia_diamante(self):
+        """
+        Testa grafo em diamante (core afeta net e audio, e ambos afetam browser).
+        Garante que 'browser' não duplica no resultado.
+        """
+        self.g.add_aresta("core", "net")
+        self.g.add_aresta("core", "audio")
+        self.g.add_aresta("net", "browser")
+        self.g.add_aresta("audio", "browser")
+
+        afetados = self.g.dependentes_transitivos("core")
+        self.assertEqual(afetados, {"net", "audio", "browser"})
+
+    def test_dependentes_transitivos_vertice_inexistente(self):
+        """Consultar pacote que não existe deve retornar conjunto vazio seguro."""
+        afetados = self.g.dependentes_transitivos("fantasma")
+        self.assertEqual(afetados, set())
+
+    def test_dependentes_transitivos_com_ciclo(self):
+        """Garante que a BFS não entra em loop infinito se houver ciclo."""
+        self.g.add_aresta("A", "B")
+        self.g.add_aresta("B", "A")
+
+        afetados = self.g.dependentes_transitivos("A")
+        self.assertEqual(afetados, {"A", "B"})
+
 if __name__ == "__main__":
     unittest.main()

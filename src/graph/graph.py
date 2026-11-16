@@ -102,7 +102,7 @@ class Graph:
                     ciclo = dfs(v)
                     if ciclo:
                         return ciclo
-                        
+
             caminho.pop()
             estado[u] = 2  # Preto (encerrado)
             return None
@@ -114,3 +114,26 @@ class Graph:
                     return ciclo
         return None
         
+    def dependentes_transitivos(self, v):
+        """
+        Retorna um conjunto (set) com todos os pacotes que dependem de v
+        direta ou indiretamente (efeito cascata de remoção).
+        Utiliza Busca em Largura (BFS).
+        """
+        if v not in self.vertices:
+            return set()
+
+        visitados = set()
+        # Começa com os dependentes diretos de v
+        fila = list(self.vertices.get(v, []))
+
+        while fila:
+            atual = fila.pop(0)  # Tira o primeiro da fila
+            if atual not in visitados:
+                visitados.add(atual)
+                # Adiciona na fila os dependentes de 'atual' para continuar a onda
+                for proximo in self.vertices.get(atual, []):
+                    if proximo not in visitados:
+                        fila.append(proximo)
+
+        return visitados
