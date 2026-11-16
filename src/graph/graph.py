@@ -76,3 +76,41 @@ class Graph:
         if(len(ordem) == len(self.vertices)):
             return True, ordem, camadas
         return False, None, None
+
+    def dfs_ciclo(self):
+        """
+        Detecta e reconstrói o caminho de um ciclo usando DFS com 3 estados.
+        Retorna uma lista com o ciclo fechado [A, B, ..., A] ou None se for acíclico.
+        
+        Estados:
+            0 = Não visitado (branco)
+            1 = Ativo na pilha de busca atual (cinza)
+            2 = Encerrado/processado (preto)
+        """
+        estado = {v: 0 for v in self.vertices}
+        caminho = []
+        def dfs(u):
+            estado[u] = 1  # Cinza (ativo na busca atual)
+            caminho.append(u)
+            
+            for v in self.vizinhos(u):
+                if estado[v] == 1:
+                    # Encontrou ciclo!
+                    idx = caminho.index(v)
+                    return caminho[idx:] + [v]
+                elif estado[v] == 0:
+                    ciclo = dfs(v)
+                    if ciclo:
+                        return ciclo
+                        
+            caminho.pop()
+            estado[u] = 2  # Preto (encerrado)
+            return None
+
+        for v in self.vertices:
+            if estado[v] == 0:
+                ciclo = dfs(v)
+                if ciclo:
+                    return ciclo
+        return None
+        

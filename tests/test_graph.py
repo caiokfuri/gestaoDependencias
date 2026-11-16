@@ -218,5 +218,53 @@ class TestGraphEstrutura(unittest.TestCase):
         self.assertEqual(ordem, [])
         self.assertEqual(camadas, [])
 
+
+    # TESTES DE DETECÇÃO DE CICLO COM DFS
+
+    def test_dfs_cicle_sem_ciclo(self):
+        """Grafo acíclico normal (A -> B -> C) não deve ter ciclo."""
+        self.g.add_aresta("libz", "libpng")
+        self.g.add_aresta("libpng", "app")
+
+        ciclo = self.g.dfs_ciclo()
+        self.assertIsNone(ciclo, "Não deve encontrar ciclo em grafo acíclico")
+
+    def test_dfs_cicle_detecta_ciclo_fechado(self):
+        """Testa se detecta o caminho fechado A -> B -> C -> A."""
+        self.g.add_aresta("A", "B")
+        self.g.add_aresta("B", "C")
+        self.g.add_aresta("C", "A")
+
+        ciclo = self.g.dfs_ciclo()
+        self.assertIsNotNone(ciclo, "Deveria encontrar um ciclo")
+        # Garante que o ciclo fecha nele mesmo (primeiro elemento == último)
+        self.assertEqual(ciclo[0], ciclo[-1])
+        # Garante que os nós A, B e C estão no ciclo
+        self.assertIn("A", ciclo)
+        self.assertIn("B", ciclo)
+        self.assertIn("C", ciclo)
+
+    def test_dfs_cicle_auto_laco(self):
+        """Testa se pacote apontando para si mesmo (loop -> loop) é detectado."""
+        self.g.add_aresta("loop", "loop")
+
+        ciclo = self.g.dfs_ciclo()
+        self.assertIsNotNone(ciclo)
+        self.assertEqual(ciclo, ["loop", "loop"])
+
+    def test_dfs_cicle_ciclo_em_componente_distante(self):
+        """Testa ciclo escondido em uma componente desconexa separada."""
+        # Componente 1: saudável (X -> Y)
+        self.g.add_aresta("X", "Y")
+        # Componente 2: com ciclo (M -> N -> M)
+        self.g.add_aresta("M", "N")
+        self.g.add_aresta("N", "M")
+
+        ciclo = self.g.dfs_ciclo()
+        self.assertIsNotNone(ciclo)
+        self.assertEqual(ciclo[0], ciclo[-1])
+        self.assertIn("M", ciclo)
+        self.assertIn("N", ciclo)
+
 if __name__ == "__main__":
     unittest.main()
