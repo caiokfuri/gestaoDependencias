@@ -1,42 +1,35 @@
 @startuml
 !include estilo.puml
 !pragma layout elk
-skinparam packageStyle rectangle
-skinparam packageTitleAlignment right
 hide empty description
-left to right direction
-title DepGraph — Ciclo de planejamento e transação (proposta)
+title DepGraph — Estados observáveis (abstração da implementação)
 state SemPlano
-state Analisando
-state "Resultado da análise" as Resultado {
-state Bloqueada
-state Inconclusiva
-state Desatualizada
-state Falha
-state "Plano disponível" as Disponivel {
-    state Pronta
-    state Preparando
-    state Concluida
-    state ChecarProgresso <<choice>>
-    state ValidarFinal
-    Pronta --> ChecarProgresso : avançar [pré-requisitos OK\nou zero operações]\n/ preparar se houver
-    Preparando --> ChecarProgresso : avançar [pré-requisitos OK]\n/ preparar próximo
-    ChecarProgresso --> Preparando : [ainda há operações]
-    ChecarProgresso --> ValidarFinal : [não há operações pendentes]
-    ValidarFinal : entry / validar estado final completo
-    ValidarFinal --> Concluida : [estado válido] / confirmar na sessão
-    Concluida : avançar [pedido e estado confirmado\ninalterados] / informar conclusão
-}
-Disponivel --> Desatualizada : pedido ou estado\nesperado alterados
-Pronta --> Falha : avançar\n[pré-requisito falhou]
-Preparando --> Falha : avançar\n[pré-requisito falhou]
-ValidarFinal --> Falha : [estado inválido]\n/ preservar instalados
-}
+state Bloqueado
+state Inconclusivo
+state Pronto
+state Preparando
+state Concluido
+state "Avanço bloqueado" as Desatualizado
 [*] --> SemPlano
-SemPlano --> Analisando : analisar\n[sintaxe válida]
-Analisando --> Pronta : solução encontrada
-Analisando --> Bloqueada : alternativas esgotadas
-Analisando --> Inconclusiva : limite atingido
-Analisando --> SemPlano : base inválida
-Resultado --> Analisando : analisar [sintaxe válida]\n/ descartar preparação anterior
+SemPlano --> Pronto : analisar / Plan.success=true
+SemPlano --> Bloqueado : analisar / falha sem limite
+SemPlano --> Inconclusivo : analisar / Issue.kind=limite
+Pronto --> Preparando : avançar [ações restantes após passo]
+Pronto --> Concluido : avançar [zero ações ou última ação válida]
+Preparando --> Preparando : avançar [ações restantes]
+Preparando --> Concluido : avançar [última ação; final válido]
+Pronto --> Desatualizado : pedido editado ou base alterada
+Preparando --> Desatualizado : pedido editado ou base alterada
+Concluido : novo avanço não repete operações
+note bottom of Desatualizado
+ Estado observado pela interface/validações,
+ sem enumeração de estados armazenada.
+ Reanálise válida redefine plano e preparação.
+ Exceções não apagam automaticamente o plano anterior.
+end note
+note bottom of Preparando
+ Exceção de pré-requisito bloqueia o passo.
+ Falha de validação final preserva installed,
+ staged e history; permite nova tentativa.
+end note
 @enduml

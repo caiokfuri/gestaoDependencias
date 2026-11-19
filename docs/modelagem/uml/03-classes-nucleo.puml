@@ -1,58 +1,55 @@
 @startuml
 !include estilo.puml
 !pragma layout elk
-title DepGraph — Classes do núcleo (proposta)
-class Sessao {
-    +instalados: mapa
-    +pedidosAtuais: lista<Requisito>
-    +analisar(pedidos): Plano
-    +avancar(): resultado
-    +consultarRemocao(nome): resultado
+title DepGraph — Classes do núcleo implementadas
+class PackagePreview {
+ +planned_text: str
+ +analyze()
+ +advance()
+ +removal()
+ +render()
+ +save()
 }
-class Transacao {
-    +estado: str
-    +preparados: lista<str>
-    +historico: lista<str>
-    +avancar(instalados, pedidosAtuais): resultado
-    +validarFinal(): mapa
+class Session {
+ +installed: dict
+ +staged: list
+ +applied: bool
+ +history: list
+ +analyze(text): Plan
+ +advance()
 }
-class Resolvedor {
-    +planejar(pedidos, instalados, limite): Plano
+class Catalog {
+ +packages: dict
+ +plan(requests, installed, limit): Plan
+ +validate_state(installed)
+ +removal_impact(name, installed)
 }
-class Catalogo {
-    +consultar(nome): lista<Pacote>
-    +obter(nome, versao): Pacote
-    +validarEstado(instalados): void
+class Graph {
+ +vertices: dict
+ +predecessores: dict
+ +nodes: dict
+ +edges: dict
+ +add_vertice(v)
+ +add_aresta(u, v)
+ +geracoes(): list
+ +kahn(): list
+ +dfs_cicle(): list
+ +dependentes(v): set
 }
-class GrafoDependencias {
-    +adicionarVertice(nome): void
-    +adicionarAresta(origem, destino): void
-    +ordenar(): lista<str>
-    +encontrarCiclo(): lista<str>
-    +dependentes(nome): conjunto<str>
-}
-class AnaliseRemocao {
-    +analisar(nome, instalados): resultado
-}
-class Plano
-Sessao --> "1" Resolvedor
-Sessao --> "1" Catalogo
-Sessao --> "1" AnaliseRemocao
-Sessao --> "0..1" Transacao : preparação atual
-Transacao --> "1" Plano
-Transacao --> "1" Catalogo : valida estado final
-Resolvedor --> "1" Catalogo
-Resolvedor ..> Plano : produz
-Resolvedor ..> GrafoDependencias
-Catalogo ..> GrafoDependencias
-AnaliseRemocao --> "1" Catalogo
-AnaliseRemocao ..> GrafoDependencias
-note bottom of Transacao
-  Preparação parcial preserva os instalados.
-  Sessao aplica o estado final somente após validação.
-  Pedido ou base alterados exigem nova análise.
+class Plan
+class CycleError
+PackagePreview --> "1" Session : session
+PackagePreview --> "1" Catalog : catalog
+Session --> "1" Catalog : catalog
+Session --> "0..1" Plan : plan
+Catalog ..> Graph : constrói e consulta
+Plan --> "1" Graph : graph
+PackagePreview ..> Graph : layout próprio
+Graph ..> CycleError : lança em Kahn
+note bottom of Session
+ Transação é responsabilidade de Session.
+ Não há classe Transacao ou Resolvedor separada.
+ Pedido editado: bloqueio em PackagePreview.
+ Base alterada: bloqueio em Session.
 end note
-legend bottom
-  Arquitetura proposta; Plano e Catalogo detalhados na vista de domínio.
-endlegend
 @enduml

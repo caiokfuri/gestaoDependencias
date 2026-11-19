@@ -1,53 +1,46 @@
 @startuml
 !include estilo.puml
-title DepGraph — Planejamento (proposta)
+title DepGraph — Planejamento implementado
 actor Usuário as U
-boundary Interface as I
-control Sessao as S
-control Resolvedor as R
-entity Catalogo as C
-participant GrafoDependencias as G
-U -> I : Solicitar análise
-I -> S : analisar(pedidos)
-S -> S : Validar sintaxe
-alt Entrada inválida
-    S --> I : Erro; pedido editado não pode executar plano anterior
-else Entrada válida
-    S -> S : Descartar preparação anterior\ne copiar pedido e base
-    S -> R : planejar(pedidos, instalados, limite)
-    R -> C : validarEstado(instalados)
-    alt Estado inicial inválido
-        C --> R : Erro de validação
-        R --> S : Erro; sem plano executável
-    else Estado inicial válido
-        C --> R : Estado válido
-        loop Enquanto necessário, com alternativas e dentro do limite
-            R -> C : consultar(nome)
-            C --> R : Versões candidatas
-            R -> R : Escolher versão, expandir requisitos\ne verificar compatibilidade
-            opt Atribuição completa compatível
-                R -> G : Construir grafo e ordenar()
-                G --> R : Ordem ou ciclo detectado
-                opt Ciclo detectado
-                    R -> G : encontrarCiclo()
-                    G --> R : Caminho fechado
-                end
-            end
-            opt Ramo inválido e alternativas disponíveis
-                R -> R : Restaurar ponto de escolha\ne descartar dependências do ramo
-            end
-        end
-        R --> S : Plano válido, bloqueado ou inconclusivo
-        S -> S : Registrar plano
-        opt Resultado válido
-            S -> S : Criar transação executável
-        end
+boundary PackagePreview as I
+control Session as S
+entity Catalog as C
+participant Graph as G
+U -> I : Analisar instalação
+I -> S : analyze(request_box.text)
+S -> S : parse_requests(text)
+alt Sintaxe inválida
+ S --> I : ValueError; planned_text não é atualizado
+else Sintaxe válida
+ S -> C : plan(requests, installed)
+ C -> C : validate_state(installed)
+ alt Base inválida
+  C --> S : ValueError
+  S --> I : Erro; sem novo resultado
+ else Base válida
+  loop search(selected, requirements): chamadas recursivas
+   C -> C : Verificar limite, requisitos e conflitos
+   alt Atribuição completa
+    C -> G : Construir grafo; kahn()
+    opt CycleError
+     C -> G : dfs_cicle()
+     G --> C : Caminho de ciclo real
     end
-    S --> I : Resultado ou erro de validação
+   else Nome ainda sem versão
+    C -> C : Tentar candidatos em ordem decrescente
+    C -> C : search(cópia da seleção, requisitos ampliados)
+   end
+  end
+  C --> S : Plan válido ou falha; limite é inconclusivo
+  S -> S : Atribuir plan; limpar staged e history; applied=false
+  S --> I : Plan
+  I -> I : Atualizar planned_text após análise retornada
+ end
 end
-I --> U : Apresentar plano, grafo ou diagnóstico
-note over S, R
-  A análise não altera o estado instalado.
-  Limite atingido não comprova impossibilidade.
+I --> U : Plano ou diagnóstico
+note over I,S
+ Edição do pedido é verificada na interface antes de avançar.
+ Uma exceção de análise não substitui o plano anterior na sessão.
+ A análise não modifica installed.
 end note
 @enduml

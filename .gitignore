@@ -18,3 +18,13 @@ venv/
 
 # Logs
 *.log
+
+# Saídas locais e repositório usado como fonte
+trab-grafo/
+.mplconfig/
+outputs/
+dist/
+*.aux
+*.out
+*.toc
+*.synctex.gz

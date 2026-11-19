@@ -1,49 +1,52 @@
 @startuml
 !include estilo.puml
-!pragma useVerticalIf on
-title DepGraph — Atividade de resolução (proposta)
+title DepGraph — Uma chamada recursiva de search()
 start
-:Validar sintaxe, catálogo\ne estado instalado;
-if (Entrada e base válidas?) then (não)
-    :Informar erro de entrada ou estado;
-    stop
-else (sim)
-    :Acumular pedidos e fixar\ninstalados não solicitados;
-    :Inicializar pilha com atribuição vazia\ne contador de tentativas em zero;
+if (Tentativas >= limite ou selecionados >= 200?) then (sim)
+ :Registrar resultado inconclusivo;
+ stop
+else (não)
 endif
-while (Há ramo pendente?) is (sim)
-    :Retirar o próximo ramo\nda pilha;
-    if (Ramo escolhe um candidato?) then (sim)
-        if (Limite de tentativas atingido?) then (sim)
-            :Retornar resultado\ninconclusivo;
-            stop
-        else (não)
-            :Contar tentativa, selecionar versão\ne incorporar suas dependências\na cópia de requisitos deste ramo;
-        endif
-    else (não)
-    endif
-    if (Restrições e conflitos satisfeitos?) then (sim)
-        if (Atribuição completa?) then (sim)
-            :Construir grafo e executar Kahn;
-            if (Ordem completa?) then (sim)
-                :Retornar plano válido\ne operações necessárias;
-                stop
-            else (não)
-                :Reconstruir ciclo por DFS\ne registrar diagnóstico;
-            endif
-        else (não)
-            :Consultar candidatos compatíveis\ndo próximo nome;
-            if (Há candidatos?) then (sim)
-                :Empilhar um ramo independente\npor candidato, para explorar\nprimeiro as versões mais altas;
-            else (não)
-                :Registrar dependência ausente\nou versão incompatível;
-            endif
-        endif
-    else (não)
-        :Registrar restrição incompatível\nou conflito declarado;
-    endif
-    :Descartar apenas os dados do ramo atual;\npreservar os ramos pendentes;
+:Agrupar requisitos por nome;
+if (Versão selecionada viola requisito\nou há conflito declarado?) then (sim)
+ :Registrar falha do ramo;
+ stop
+else (não)
+endif
+if (Todos os nomes têm versão?) then (sim)
+ :Construir Graph de dependências;
+ :Executar kahn();
+ if (Há ciclo?) then (sim)
+  :Obter caminho com dfs_cicle();
+  :Registrar falha por ciclo;
+ else (não)
+  :Criar Plan válido com ordem e ações;
+ endif
+ stop
+else (não)
+endif
+:Escolher primeiro nome ainda não selecionado;
+:Filtrar candidatos pelas restrições;
+if (Não há candidatos?) then (sim)
+ :Registrar versão incompatível ou ausência;
+ stop
+else (não)
+endif
+while (Há candidato não tentado?) is (sim)
+ if (Tentativas >= limite?) then (sim)
+  :Registrar resultado inconclusivo;
+  stop
+else (não)
+ endif
+ :Incrementar tentativas;
+ :Chamar search() com nova seleção\ne lista de requisitos ampliada;
+ if (Chamada retornou solução?) then (sim)
+  :Retornar solução;
+  stop
+else (não)
+ endif
+ :Tentar candidato seguinte, sem reutilizar\na seleção ou requisitos do ramo falho;
 endwhile (não)
-:Retornar bloqueado com\ndiagnóstico representativo;
+:Retornar None ao chamador;
 stop
 @enduml

@@ -2,7 +2,7 @@
 
 Protótipo do **tema 9 — Gestão de Conflitos em Sistemas de Dependência**, com foco em um gerenciador de pacotes inspirado no Linux. A aplicação resolve um pedido de instalação usando um catálogo, versões disponíveis e um conjunto de pacotes já instalados.
 
-O protótipo usa NetworkX para grafos e Matplotlib para a interface. A versão acadêmica final precisará da implementação própria exigida no [enunciado](../../TP.pdf). O primeiro exemplo de tarefas foi substituído; suas telas estão no [registro histórico](tarefas-historico.md).
+A aplicação em `depgraph/` usa grafo próprio e Matplotlib para a interface, conforme a restrição do [enunciado](../../TP.pdf). O nome desta pasta é histórico. O primeiro exemplo de tarefas foi substituído; suas telas estão no [registro histórico](tarefas-historico.md).
 
 ## 1. Problema e escopo
 
@@ -37,26 +37,26 @@ Requer Python 3.9 ou superior. Na raiz do repositório:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r prototypes/networkx_preview/requirements.txt
-python -m prototypes.networkx_preview
+python -m pip install -r requirements.txt
+python -m depgraph
 ```
 
 No Windows/PowerShell, use `.venv\Scripts\Activate.ps1` para ativar o ambiente. A interface local requer um backend gráfico do Matplotlib. Para gerar imagens em ambiente sem janela, use `--exportar`.
 
 | Ação | Comando |
 | --- | --- |
-| Abrir a instalação de um ambiente gráfico | `python -m prototypes.networkx_preview` |
-| Demonstrar conflito de versões | `python -m prototypes.networkx_preview --cenario versoes` |
-| Demonstrar incompatibilidade explícita | `python -m prototypes.networkx_preview --cenario conflito` |
-| Demonstrar dependência ausente | `python -m prototypes.networkx_preview --cenario ausente` |
-| Demonstrar ciclo | `python -m prototypes.networkx_preview --cenario ciclo` |
-| Demonstrar atualização | `python -m prototypes.networkx_preview --cenario upgrade` |
-| Demonstrar bloqueio por versão instalada | `python -m prototypes.networkx_preview --cenario instalado` |
-| Demonstrar seleção de outra versão | `python -m prototypes.networkx_preview --cenario alternativa` |
-| Informar pedido próprio | `python -m prototypes.networkx_preview --pedidos "web-server, text-editor"` |
-| Listar catálogo e relações | `python -m prototypes.networkx_preview --listar` |
-| Usar catálogo próprio | `python -m prototypes.networkx_preview --catalogo caminho/catalogo.json` |
-| Exportar a interface sem janela | `python -m prototypes.networkx_preview --cenario versoes --exportar outputs/versoes.png` |
+| Abrir a instalação de um ambiente gráfico | `python -m depgraph` |
+| Demonstrar conflito de versões | `python -m depgraph --cenario versoes` |
+| Demonstrar incompatibilidade explícita | `python -m depgraph --cenario conflito` |
+| Demonstrar dependência ausente | `python -m depgraph --cenario ausente` |
+| Demonstrar ciclo | `python -m depgraph --cenario ciclo` |
+| Demonstrar atualização | `python -m depgraph --cenario upgrade` |
+| Demonstrar bloqueio por versão instalada | `python -m depgraph --cenario instalado` |
+| Demonstrar seleção de outra versão | `python -m depgraph --cenario alternativa` |
+| Informar pedido próprio | `python -m depgraph --pedidos "web-server, text-editor"` |
+| Listar catálogo e relações | `python -m depgraph --listar` |
+| Usar catálogo próprio | `python -m depgraph --catalogo caminho/catalogo.json` |
+| Exportar a interface sem janela | `python -m depgraph --cenario versoes --exportar outputs/versoes.png` |
 
 Na interface, os botões de cenário usam o catálogo carregado e restauram seu estado inicial. Nomes dos cenários da demonstração exigem que o catálogo contenha os respectivos pacotes.
 
@@ -203,38 +203,38 @@ O catálogo de entrada usa este formato:
 
 Cada versão de um pacote ocupa uma entrada. `depende`, `conflita` e `descricao` são opcionais. Uma relação sem restrição de versão aceita qualquer versão. Não são permitidas entradas duplicadas com nome e versão numericamente equivalentes. O estado inicial instalado deve existir no catálogo, satisfazer as dependências, não conter incompatibilidades e ser acíclico segundo a política do simulador.
 
-O botão **Salvar relatório JSON + imagem PNG** grava `outputs/prototipo-networkx/pacotes.json` e `outputs/prototipo-networkx/pacotes.png`, substituindo versões anteriores. O JSON contém pedido, versões selecionadas, estado instalado, operações, diagnósticos e histórico. Esse relatório não é um catálogo reabrível com `--catalogo`; os formatos têm finalidades diferentes.
+O botão **Salvar relatório JSON + imagem PNG** grava `outputs/depgraph/pacotes.json` e `outputs/depgraph/pacotes.png`, substituindo versões anteriores. O JSON contém pedido, versões selecionadas, estado instalado, operações, diagnósticos e histórico. Esse relatório não é um catálogo reabrível com `--catalogo`; os formatos têm finalidades diferentes.
 
 ## 7. Código e testes
 
 | Arquivo | Responsabilidade |
 | --- | --- |
-| [package_model.py](../../prototypes/networkx_preview/package_model.py) | Catálogo, versões, requisitos, backtracking, plano, transação e impacto de remoção. |
-| [package_app.py](../../prototypes/networkx_preview/package_app.py) | Interface, cenários, inspeção de pacotes e exportação. |
-| [pacotes.json](../../prototypes/networkx_preview/examples/pacotes.json) | Catálogo sintético e estado instalado inicial. |
-| [test_packages.py](../../prototypes/networkx_preview/test_packages.py) | Testes da resolução, transações e interface de pacotes. |
-| [gerar_imagens.py](../../prototypes/networkx_preview/gerar_imagens.py) | Reprodução dos dez cenários da galeria. |
+| [package_model.py](../../depgraph/model.py) | Catálogo, versões, requisitos, backtracking, plano, transação e impacto de remoção. |
+| [package_app.py](../../depgraph/app.py) | Interface, cenários, inspeção de pacotes e exportação. |
+| [pacotes.json](../../depgraph/examples/pacotes.json) | Catálogo sintético e estado instalado inicial. |
+| [test_packages.py](../../tests/test_packages.py) | Testes da resolução, transações e interface de pacotes. |
+| [gerar_imagens.py](../../depgraph/gerar_imagens.py) | Reprodução dos dez cenários da galeria. |
 
-Execute os testes atuais e os testes preservados do primeiro exemplo com:
+Execute os testes da distribuição final com:
 
 ```bash
-MPLBACKEND=Agg python -m unittest prototypes.networkx_preview.test_packages prototypes.networkx_preview.test_preview -v
+MPLBACKEND=Agg python -m unittest test_graph tests.test_packages -v
 ```
 
-A suíte inclui 29 testes: 18 de pacotes e 11 históricos de tarefas. São verificados fechamento transitivo, ordenação, restrições, conflitos em ambas as direções, versões instaladas, dependentes preservados, retrocesso, ciclos, limite de busca, estado parcial de transação, remoção e renderização. A renderização automatizada não substitui uma verificação da integração da janela com o sistema operacional.
+A suíte final inclui 24 testes: 20 de pacotes e quatro do grafo próprio. São verificados fechamento transitivo, ordenação, restrições, conflitos em ambas as direções, versões instaladas, dependentes preservados, retrocesso, ciclos, limite de busca, estado parcial de transação, remoção e renderização. A renderização automatizada não substitui uma verificação da integração da janela com o sistema operacional.
 
 ## 8. Reproduzir as imagens
 
 Na raiz, com as dependências instaladas:
 
 ```bash
-python -m prototypes.networkx_preview.gerar_imagens
+python -m depgraph.gerar_imagens
 ```
 
 O comando gera os dez PNGs `pacotes-*.png` em `docs/prototipo-networkx/imagens/`. Para outra pasta:
 
 ```bash
-python -m prototypes.networkx_preview.gerar_imagens --destino outputs/imagens-pacotes
+python -m depgraph.gerar_imagens --destino outputs/imagens-pacotes
 ```
 
 As imagens antigas de tarefas permanecem identificadas no documento histórico e não são a apresentação atual do projeto.

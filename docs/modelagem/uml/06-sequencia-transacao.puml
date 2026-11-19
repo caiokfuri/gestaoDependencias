@@ -1,53 +1,48 @@
 @startuml
 !include estilo.puml
-title DepGraph — Preparação e confirmação (proposta)
+title DepGraph — Transação implementada em Session
 actor Usuário as U
-boundary Interface as I
-control Sessao as S
-control Transacao as T
-entity Catalogo as C
+boundary PackagePreview as I
+control Session as S
+entity Catalog as C
 U -> I : Próximo pacote
-I -> S : avancar()
-alt Sem transação válida
-    S --> I : Bloquear; exigir análise
-else Transação disponível
-    S -> T : avancar(instalados, pedidosAtuais)
-    alt Concluída, pedido e estado confirmado inalterados
-        T --> S : Sem operações pendentes
-    else Pedido ou estado esperado alterados
-        T --> S : Desatualizada; exigir nova análise
-    else Plano atual e válido
-        opt Há operação pendente
-            T -> T : Verificar pré-requisitos no estado temporário
-        end
-        alt Pré-requisito não satisfeito
-            T --> S : Falha; não registrar preparação
-        else Pré-requisitos satisfeitos ou sem operações
-            opt Há operação pendente
-                T -> T : Registrar pacote preparado e histórico
-            end
-            alt Ainda há operações
-                T --> S : Progresso parcial; instalados preservados
-            else Todas preparadas ou nenhuma operação necessária
-                T -> T : validarFinal()
-                T -> C : validarEstado(estadoFinal)
-                alt Estado final inválido
-                    C --> T : Erro
-                    T --> S : Falha; confirmação bloqueada
-                else Estado final válido
-                    C --> T : Validação concluída
-                    T --> S : Estado final pronto
-                    S -> S : Aplicar estado final e marcar conclusão\nna transação; registrar novo estado esperado
-                end
-            end
-        end
-    end
-    S --> I : Resultado do avanço
+alt Pedido editado
+ I --> U : Exigir nova análise
+else Pedido inalterado
+ I -> S : advance()
+ alt Sem plano válido
+  S --> I : ValueError
+ else applied=true
+  S --> I : None; nenhuma nova operação
+ else installed diferente de plan.base
+  S --> I : ValueError; exigir análise
+ else Zero ações pendentes
+  S -> C : validate_state(installed)
+  alt Validação recusada
+   C --> S : ValueError
+   S --> I : Erro; preservar estado e progresso
+  else Estado válido
+   S -> S : applied=true
+   S --> I : None
+  end
+ else Há ação pendente
+  S -> S : Conferir dependências no estado temporário
+  alt Pré-requisito inválido
+   S --> I : ValueError; não preparar
+  else Última ação e pré-requisitos satisfeitos
+   S -> C : validate_state(final)
+   alt Validação recusada
+    C --> S : ValueError
+    S --> I : Erro; preservar installed, staged e history
+   else Estado válido
+    S -> S : Registrar preparo; confirmar installed;\nmarcar applied; registrar conclusão
+    S --> I : Nome preparado
+   end
+  else Ação intermediária e pré-requisitos satisfeitos
+   S -> S : Registrar preparo e histórico;\npreservar installed
+   S --> I : Nome preparado
+  end
+ end
+ I --> U : Progresso ou diagnóstico
 end
-I --> U : Progresso, conclusão ou diagnóstico
-note over S, T
-  Depois de concluída, a base antiga não deve causar
-  falso bloqueio: o estado confirmado é o estado esperado.
-  Falhas preservam o estado instalado.
-end note
 @enduml

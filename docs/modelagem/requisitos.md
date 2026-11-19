@@ -18,11 +18,11 @@ O usuário da interface é o único ator externo. Catálogo, resolvedor e sistem
 | RF04 | Preservar versões instaladas de nomes ausentes do pedido; permitir mudança de nomes explicitamente solicitados, mantendo válidos os dependentes existentes. | Existe no protótipo. |
 | RF05 | Explorar versões alternativas; uma tentativa abandonada não pode deixar dependências residuais na solução. | Existe no protótipo. |
 | RF06 | Distinguir dependência ausente, restrições incompatíveis, conflito declarado e ciclo; falhas não podem disponibilizar operações de instalação. | Existe no protótipo. |
-| RF07 | Produzir ordem topológica; para toda aresta A → B, A deve preceder B. Mostrar um caminho fechado real quando houver ciclo. | Existe com NetworkX; implementar algoritmos próprios. |
+| RF07 | Produzir ordem topológica; para toda aresta A → B, A deve preceder B. Mostrar um caminho fechado real quando houver ciclo. | Implementado com Kahn e DFS próprios. |
 | RF08 | Preparar um pacote por avanço; verificar pré-requisitos e manter o estado instalado intacto durante a preparação parcial. | Existe no protótipo. |
 | RF09 | Confirmar o estado final somente após validação integral; concluir sem alterações quando o plano não tiver operações. | Existe no protótipo. |
 | RF10 | Impedir avanço após mudança de pedido ou estado instalado; exigir nova análise e descartar preparação anterior ao replanejar. | Existe, com verificação do pedido na interface; centralizar no núcleo proposto. |
-| RF11 | Calcular dependentes diretos e transitivos de um pacote instalado e ordem de remoção em cascata; a consulta não altera o estado. | Existe com NetworkX; implementar busca própria. |
+| RF11 | Calcular dependentes diretos e transitivos de um pacote instalado e ordem de remoção em cascata; a consulta não altera o estado. | Implementado com busca própria de dependentes. |
 | RF12 | Visualizar dependências, versões, diagnósticos e dados de um vértice selecionado. | Existe no protótipo. |
 | RF13 | Exportar relatório JSON e imagem PNG; informar falhas de escrita ao usuário. | Existe no protótipo. |
 | RF14 | Interromper busca ao atingir limite e informar resultado inconclusivo, sem afirmar inexistência de solução. | Existe no protótipo. |
@@ -51,7 +51,7 @@ O usuário da interface é o único ator externo. Catálogo, resolvedor e sistem
 
 ## Evidências a produzir
 
-Os testes de referência estão em [test_packages.py](../../prototypes/networkx_preview/test_packages.py). A migração deve preservar os cenários e acrescentar testes específicos da estrutura própria: grafo vazio, vértice isolado, laço, componentes desconexas, ciclo com dependentes externos e invariância do grafo após as consultas.
+Os testes de referência estão em [test_packages.py](../../tests/test_packages.py). A suíte preserva os cenários e inclui testes específicos da estrutura própria: grafo vazio, vértice isolado, laço, componentes desconexas, ciclo com dependentes externos e invariância do grafo após as consultas.
 
 Na revisão final, verificar RF01–RF14 com testes ou demonstrações reproduzíveis. Para RN03, registrar análise dos algoritmos e medições efetivas. Para RN05–RN06, conferir os artefatos entregues. Ainda não há uma matriz completa de resultados da versão final.
 
