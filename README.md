@@ -88,7 +88,7 @@ O resolvedor faz backtracking sobre as versões disponíveis. Esse custo pode se
 | [Plano e pendências](docs/plano-entrega.md) | Lista de trabalho atualizada e critérios de conclusão. |
 | [Responsabilidades propostas](docs/entrega/responsabilidades.md) | Divisão sugerida entre os seis integrantes, com contribuições reais ainda a confirmar. |
 | [Relatório e entrega](docs/entrega/empacotamento.md) | Fontes LaTeX, PDF, slides, roteiros e empacotamento para revisão. |
-| Dados, testes e experimentos (David) | Incorporação e reprodução pendentes; arquivos de trabalho em `david_dias_pinto/`. |
+| [Dados (David)](data/README.md) | Catálogo incorporado; testes de pacotes e experimentos ainda pendentes. |
 | [Documentação completa](docs/modelagem/documentacao-completa.md) | Referência consolidada da aplicação, com requisitos, oito diagramas UML revisados, dados, algoritmos e validação. |
 | [Grafo próprio](docs/grafo-proprio.md) | Estruturas, algoritmos, complexidade, integração e testes. |
 | [Índice de docs](docs/README.md) | Organização dos guias e artefatos. |
@@ -105,7 +105,7 @@ MPLBACKEND=Agg python scripts/verificar.py
 python -m depgraph.gerar_imagens
 ```
 
-A verificação executa os testes de grafos disponíveis e renderiza os cenários, concluindo as transações válidas. Os testes funcionais de pacotes, o oráculo e os experimentos serão incorporados pelo David. O gerador reproduz as dez imagens de pacotes presentes na documentação.
+A verificação executa os testes de grafos e de integração da CLI/GUI e renderiza os cenários, concluindo as transações válidas. Os testes funcionais de pacotes, o oráculo e os experimentos serão incorporados pelo David. O gerador reproduz as dez imagens de pacotes presentes na documentação.
 
 ## Entrega acadêmica
 
@@ -115,8 +115,17 @@ A entrega inclui modelagem com UML, código versionado com contribuições indiv
 
 ## Integração neste repositório
 
-A implementação funcional de `trab-grafo` foi incorporada em `depgraph/` e `graph.py`. Ela pode ser iniciada também por `python3 -m src.main`. Os módulos anteriores em `src/core/`, `src/graph/` e a estrutura de GUI em `src/ui/` foram preservados; a aplicação funcional usa o núcleo e a interface de `depgraph/`.
+A interface incorporada de `trab-grafo` utiliza agora o núcleo em `src/core/` e o grafo em `src/graph/`, incluindo as otimizações publicadas pelo David. `graph.py` e `depgraph/model.py` preservam a implementação de referência da origem; não são usados pela aplicação integrada.
 
-O catálogo padrão é `david_dias_pinto/data/pacotes.json`. A pasta do David foi preservada para sua contribuição: dados, testes de pacotes, oráculo, benchmark e interpretação dos resultados. Não foram importados os equivalentes de `trab-grafo`, nem os resultados experimentais. Relatório, slides e documentos importados podem citar medições da versão de origem; essas evidências ainda precisam ser reproduzidas e conferidas pelo David nesta versão.
+A CLI do David foi preservada e integrada à interface funcional:
+
+```bash
+python3 -m src.main --simular
+python3 -m src.main --gui
+python3 -m src.main --json outputs/plano.json
+python3 -m src.main --exportar outputs/plano.png
+```
+
+`python3 -m depgraph` continua abrindo a interface diretamente. O catálogo padrão de ambas as entradas é `data/pacotes.json`, publicado pelo David. Testes funcionais de pacotes, oráculo, benchmark e resultados experimentais ainda aguardam sua contribuição. Relatório e slides contêm medições da versão de origem, que precisam ser reproduzidas nesta implementação integrada.
 
 Consulte o [registro da incorporação](docs/entrega/incorporacao.md), o [guia de Lucas](docs/entrega/README.md) e o [checklist](docs/entrega/checklist_entrega.md). O relatório e os slides são materiais para revisão; contribuições reais, dados da equipe, vídeo e prazo no Canvas ainda precisam ser confirmados.

@@ -18,7 +18,7 @@ def without_networkx(name, *args, **kwargs):
 def main():
     builtins.__import__ = without_networkx
     try:
-        suite = unittest.TestLoader().loadTestsFromNames(['test_graph', 'tests.test_graph'])
+        suite = unittest.TestLoader().loadTestsFromNames(['test_graph', 'tests.test_graph', 'tests.test_cli'])
         result = unittest.TextTestRunner(verbosity=2).run(suite)
         if not result.wasSuccessful():
             return 1
@@ -34,7 +34,7 @@ def main():
                         preview.advance()
                     if not preview.session.applied:
                         preview.advance()  # Plano válido que não requer operações.
-                    preview.session.catalog.validate_state(preview.session.installed)
+                    preview.session._validar_estado_final(preview.session.installed)
             finally:
                 plt.close(preview.fig)
         print(f'{len(SCENARIOS)} cenários renderizados; planos válidos executados sem NetworkX.')

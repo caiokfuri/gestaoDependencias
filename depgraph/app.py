@@ -5,10 +5,11 @@ import json
 from pathlib import Path
 import textwrap
 
-from .model import Catalog, Session, version_key
+from src.core.resolver import Catalog
+from src.core.domain import Session, parse_version as version_key
 
 
-CATALOG_PATH = Path(__file__).resolve().parents[1] / "david_dias_pinto/data/pacotes.json"
+CATALOG_PATH = Path(__file__).resolve().parents[1] / "data/pacotes.json"
 SCENARIOS = {
     "desktop": ("Ambiente gráfico", "desktop-suite"),
     "versoes": ("Versões incompatíveis", "modern-browser, legacy-backup, libcore>=2.0"),
@@ -25,11 +26,16 @@ COLORS = {"background": "#F3F6FB", "ink": "#17243D", "muted": "#62718A",
 
 
 class PackagePreview:
-    def __init__(self, catalog_path=CATALOG_PATH, scenario="desktop", requests=None):
+    def __init__(self, catalog_path=CATALOG_PATH, scenario="desktop", requests=None, session=None):
         import matplotlib.pyplot as plt
 
-        self.catalog, self.baseline = Catalog.load(catalog_path)
-        self.session = Session(self.catalog, dict(self.baseline))
+        if session is None:
+            self.catalog, self.baseline = Catalog.load(catalog_path)
+            self.session = Session(self.catalog, dict(self.baseline))
+        else:
+            self.catalog = session.catalog
+            self.baseline = dict(session.plan.base if session.plan else session.installed)
+            self.session = session
         self.widgets = []
         self.planned_text = ""
         self.inspection = None
@@ -47,7 +53,13 @@ class PackagePreview:
                       fontsize=9, color=COLORS["muted"])
         self._controls()
         self.fig.canvas.mpl_connect("pick_event", self._pick)
-        self.load_scenario(scenario, requests)
+        if session is None or session.plan is None:
+            self.load_scenario(scenario, requests)
+        else:
+            self.planned_text = ", ".join(req.name + (req.spec if req.spec != "*" else "")
+                                          for req in session.plan.requests)
+            self.request_box.set_val(self.planned_text)
+            self.render()
 
     def _button(self, rect, label, action, primary=False):
         from matplotlib.widgets import Button
@@ -62,7 +74,7 @@ class PackagePreview:
         def invoke(_event):
             try:
                 message = action()
-            except (ValueError, OSError) as error:
+            except (ValueError, RuntimeError, OSError) as error:
                 self.render(str(error), error=True)
             else:
                 self.render(message or "")
@@ -172,7 +184,6 @@ class PackagePreview:
 
     def _draw_graph(self):
         from math import cos, sin, tau
-        from graph import CycleError
         from matplotlib.lines import Line2D
 
         ax = self.graph_ax
@@ -180,19 +191,20 @@ class PackagePreview:
         ax.axis("off")
         plan = self.session.plan
         graph = plan.graph
-        ax.set_title(f"{len(graph)} pacotes no plano  /  {graph.number_of_edges()} dependências  /  "
+        nodes = list(graph.vertices)
+        ax.set_title(f"{len(nodes)} pacotes no plano  /  {len(graph.arestas)} dependências  /  "
                      f"{len(self.session.installed)} instalados", loc="left", fontsize=11, color=COLORS["muted"], pad=18)
-        if not graph:
+        if not nodes:
             ax.text(.5, .5, "Nenhum pacote selecionado.", ha="center", transform=ax.transAxes)
             return
-        try:
-            camadas = graph.geracoes()
+        acyclic, _, camadas = graph.kahn()
+        if acyclic:
             positions = {name: (column, (len(layer) - 1) / 2 - row)
                          for column, layer in enumerate(camadas)
                          for row, name in enumerate(layer)}
-        except CycleError:
-            positions = {name: (cos(tau * i / len(graph)), sin(tau * i / len(graph)))
-                         for i, name in enumerate(graph)}
+        else:
+            positions = {name: (cos(tau * i / len(nodes)), sin(tau * i / len(nodes)))
+                         for i, name in enumerate(nodes)}
         roots = {req.name for req in plan.requests}
         errors = {name for issue in plan.issues for name in issue.nodes}
         staged = set(self.session.staged)
@@ -200,11 +212,11 @@ class PackagePreview:
                   COLORS["done"] if name in staged else
                   COLORS["installed"] if name in self.session.installed and
                   (name not in plan.selected or version_key(self.session.installed[name]) == version_key(plan.selected[name].version)) else
-                  COLORS["root"] if name in roots else COLORS["planned"] for name in graph]
-        self.node_order = list(graph)
-        size = 800 if len(graph) > 12 else 1300
-        self.node_artist = ax.scatter([positions[n][0] for n in graph],
-                                      [positions[n][1] for n in graph], s=size,
+                  COLORS["root"] if name in roots else COLORS["planned"] for name in nodes]
+        self.node_order = nodes
+        size = 800 if len(nodes) > 12 else 1300
+        self.node_artist = ax.scatter([positions[n][0] for n in nodes],
+                                      [positions[n][1] for n in nodes], s=size,
                                       c=colors, edgecolors="white", linewidths=2, zorder=3)
         self.node_artist.set_picker(True)
         cycle_edges = set()
@@ -228,13 +240,14 @@ class PackagePreview:
                 zorder=2)
             ax.add_patch(arrow)
 
-        for u, v in graph.edges:
+        for u, v in graph.arestas:
             draw_edge(u, v)
         for issue in plan.issues:
             if issue.kind == "conflito" and len(issue.nodes) == 2:
                 draw_edge(*issue.nodes, conflict=True)
         for name, (x, y) in positions.items():
-            version = graph.nodes[name].get("version", "?")
+            package = plan.selected.get(name)
+            version = package.version if package else self.session.installed.get(name, "?")
             ax.text(x, y, version, ha="center", va="center", fontsize=9, color=COLORS["ink"], weight="bold")
             ax.annotate(textwrap.fill(name, 15), (x, y), xytext=(0, -24), textcoords="offset points",
                         ha="center", va="top", fontsize=8, color=COLORS["ink"])
@@ -314,7 +327,7 @@ def main():
                     print(f"{name} {package.version} | depende: {', '.join(map(str, package.depends)) or '-'} | conflita: {', '.join(map(str, package.conflicts)) or '-'}")
             return
         preview = PackagePreview(args.catalogo, args.cenario, args.pedidos)
-    except (ValueError, OSError) as error:
+    except (ValueError, RuntimeError, OSError) as error:
         parser.error(str(error))
     import matplotlib.pyplot as plt
     if args.exportar:

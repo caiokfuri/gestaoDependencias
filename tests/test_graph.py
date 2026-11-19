@@ -308,5 +308,45 @@ class TestGraphEstrutura(unittest.TestCase):
         afetados = self.g.dependentes_transitivos("A")
         self.assertEqual(afetados, {"A", "B"})
 
+
+class TestGraphGrandeEscala(unittest.TestCase):
+    """Garante que os algoritmos suportam grafos grandes (usados nos experimentos)."""
+
+    N = 20000  # Bem acima do limite de recursão padrão do Python (1000)
+
+    def setUp(self):
+        self.g = Graph()
+        for i in range(self.N):
+            self.g.add_aresta(i, i + 1)
+
+    def test_dfs_cadeia_longa_sem_recursion_error(self):
+        """DFS iterativa não estoura a pilha em cadeia longa acíclica."""
+        self.assertIsNone(self.g.dfs_ciclo())
+
+    def test_dfs_ciclo_longo_fechado(self):
+        """Ciclo com N+1 vértices é reconstruído completo e fechado."""
+        self.g.add_aresta(self.N, 0)
+        ciclo = self.g.dfs_ciclo()
+        self.assertEqual(len(ciclo), self.N + 2)
+        self.assertEqual(ciclo[0], ciclo[-1])
+        for u, v in zip(ciclo, ciclo[1:]):
+            self.assertIn(v, self.g.vizinhos(u))
+
+    def test_arestas_duplicadas_em_massa(self):
+        """Reinserir todas as arestas não duplica nada."""
+        for i in range(self.N):
+            self.g.add_aresta(i, i + 1)
+        self.assertEqual(len(self.g.arestas), self.N)
+        self.assertEqual(self.g.grau_entrada(self.N), 1)
+
+    def test_kahn_e_bfs_cadeia_longa(self):
+        """Kahn ordena toda a cadeia e a BFS alcança todos os dependentes."""
+        ok, ordem, camadas = self.g.kahn()
+        self.assertTrue(ok)
+        self.assertEqual(ordem, list(range(self.N + 1)))
+        self.assertEqual(len(camadas), self.N + 1)
+        self.assertEqual(len(self.g.dependentes_transitivos(0)), self.N)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -20,3 +20,7 @@
 - *Como o usuário distingue plano, progresso parcial e conclusão?* (Pelas cores dos nós e pelo histórico no painel).
 - *Como explicar um conflito de versão sem chamá-lo de ciclo?* (Explicando que é incompatibilidade lógica de intervalos de versão de uma mesma biblioteca).
 - *Onde ficam os arquivos exportados e o que cada um contém?* (PNG com a imagem em alta resolução e JSON com o plano de instalação completo).
+
+## Integração funcional
+
+`PackageGUI` reutiliza a interface incorporada em `depgraph/app.py` e preserva a sessão criada pela CLI. Execute `python3 -m src.main --gui` ou `python3 -m depgraph`. Ambas as entradas usam o núcleo em `src/core/`, os algoritmos em `src/graph/` e o catálogo em `data/pacotes.json`.

@@ -9,7 +9,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 ALLOWED_SUFFIXES = {'.py', '.json', '.md', '.txt', '.tex', '.sty', '.png', '.svg', '.puml', '.pdf', '.html', '.csv'}
-DIRECTORIES = ('depgraph', 'src', 'tests', 'experiments', 'scripts', 'docs', 'david_dias_pinto/data')
+DIRECTORIES = ('depgraph', 'src', 'tests', 'experiments', 'scripts', 'docs', 'data')
 ROOT_FILES = ('README.md', 'requirements.txt', 'graph.py', 'test_graph.py', 'agent.md', 'TP.pdf')
 
 
@@ -25,7 +25,7 @@ def files_to_include():
 def pending_items():
     pending = []
     for name in ('tests/test_packages.py', 'experiments/benchmark.py',
-                 'experiments/verificar_grafos.py', 'docs/experimentos/README.md', 'docs/dados.md'):
+                 'experiments/verificar_grafos.py', 'docs/experimentos/README.md'):
         if not (ROOT / name).is_file():
             pending.append(f'Contribuição do David ainda não incorporada: {name}.')
     data = json.loads((ROOT / 'docs/entrega/equipe.json').read_text())

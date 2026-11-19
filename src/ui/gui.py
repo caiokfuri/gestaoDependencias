@@ -1,55 +1,33 @@
-"""
-Módulo de Interface Gráfica e Visualização
-==========================================
-Responsável: Rafael Abras Lessa Freitas
-Atribuição acadêmica: Interface, visualização e demonstração (Tópico 6)
+"""Interface do Tópico 6, integrada à sessão do núcleo em src/core.
+
+Reutiliza os controles e o desenho funcional incorporados de trab-grafo.
 """
 
-from typing import Optional, Dict, Any
+from depgraph.app import PackagePreview
 
 
-class PackageGUI:
-    """Janela interativa desenvolvida com Matplotlib."""
+class PackageGUI(PackagePreview):
+    """Interface que preserva o plano e o progresso de uma sessão existente."""
 
-    def __init__(self, session: Any):
-        self.session = session
-        # Rafael: configurar figura, eixos, botões e campo de texto
+    def __init__(self, session):
+        super().__init__(session=session)
 
-    def setup_layout(self) -> None:
-        """
-        Rafael: criar botões:
-        - 'Analisar instalação'
-        - 'Próximo pacote' (avança transação)
-        - 'Reiniciar plano'
-        - 'Impacto da remoção'
-        """
-        pass
+    def draw_graph(self, plan):
+        self.session.plan = plan
+        self.render()
 
-    def draw_graph(self, plan: Any) -> None:
-        """
-        Rafael: desenha os nós e arestas:
-        - Layout em camadas baseado nas camadas do Kahn de Caio Kfuri.
-        - Disposição circular se houver ciclos.
-        - Cores: Cinza (instalado), Roxo (a preparar), Verde (preparado), Vermelho (em falha).
-        - Arestas tracejadas vermelhas para incompatibilidades explícitas.
-        """
-        pass
+    def show(self):
+        import matplotlib.pyplot as plt
+        plt.show()
 
-    def on_node_click(self, node_name: str) -> None:
-        """Rafael: exibe no painel inferior os detalhes da versão e dependências do pacote clicado."""
-        pass
-
-    def load_scenario(self, scenario_name: str) -> None:
-        """
-        Rafael: botões de cenários rápidos:
-        'desktop', 'versoes', 'conflito', 'ausente', 'ciclo', 'upgrade', 'alternativa'.
-        """
-        pass
-
-    def export(self, png_path: str, json_path: str) -> None:
-        """Rafael: exportar imagem PNG e arquivo JSON da análise atual."""
-        pass
-
-    def show(self) -> None:
-        """Abre a janela gráfica interativa."""
-        pass
+    def export(self, png_path, json_path):
+        import json
+        from pathlib import Path
+        from src.main import plano_para_dict
+        for path in (png_path, json_path):
+            Path(path).parent.mkdir(parents=True, exist_ok=True)
+        Path(json_path).write_text(
+            json.dumps(plano_para_dict(self.session.plan), ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        self.fig.savefig(png_path, dpi=150, facecolor=self.fig.get_facecolor())
