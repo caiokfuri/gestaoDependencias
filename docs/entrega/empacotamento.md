@@ -1,6 +1,6 @@
 # Revisão e empacotamento
 
-A [divisão de responsabilidades](responsabilidades.md) é uma proposta; `equipe.json` aguarda dados institucionais e confirmação das contribuições reais.
+O [cadastro da equipe](equipe.json) contém afiliação e contribuições com evidências do Git. Cada integrante deve conferir seu registro.
 
 ## Pacote para revisão
 
@@ -14,7 +14,7 @@ Na cópia extraída, executar os comandos do README. O gerador não instala depe
 
 ## Fechamento da entrega final
 
-Depois de confirmar os dados da equipe, atualizar o relatório com as contribuições reais, recompilar e conferir as 12–15 páginas. Conferir o estilo com o template oficial. Revisar slides, ensaiar e gravar o vídeo com participação de todos. Criar `docs/entrega/revisao-final.json` com os campos abaixo **somente após realizar as verificações**:
+Conferir as contribuições com os integrantes e recompilar o relatório caso haja ajustes. O limite é de 12–15 páginas. Ensaiar a apresentação e gravar o vídeo com participação dos seis. Criar `docs/entrega/revisao-final.json` com os campos abaixo **somente após realizar as verificações**:
 
 ```json
 {

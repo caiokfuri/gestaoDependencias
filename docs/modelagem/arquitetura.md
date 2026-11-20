@@ -4,7 +4,7 @@ As [modelagens principais](modelagens-principais.md) apresentam estas responsabi
 
 ## Classes existentes no protótipo
 
-Esta vista resume os atributos e métodos relevantes de [package_model.py](../../depgraph/model.py) e [package_app.py](../../depgraph/app.py). Omite controles gráficos e funções auxiliares. `Catalog` concentra atualmente carga, validação, resolução e análise de remoção; `Session` gerencia a preparação e o estado instalado.
+Esta vista resume os atributos e métodos relevantes de [núcleo de domínio](../../src/core/domain.py), [resolvedor](../../src/core/resolver.py) e [interface](../../depgraph/app.py). Omite controles gráficos e funções auxiliares. `Catalog` concentra atualmente carga, validação, resolução e análise de remoção; `Session` gerencia a preparação e o estado instalado.
 
 ```mermaid
 classDiagram
@@ -39,8 +39,6 @@ classDiagram
     class Catalog {
         +dict packages
         +load(path)
-        +get(name, version)
-        +validate_state(installed)
         +plan(requests, installed, limit) Plan
         +removal_impact(name, installed)
     }

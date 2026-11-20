@@ -1,0 +1,10 @@
+familia,vertices,arestas,pico_construcao_bytes
+cadeia,100,99,32152
+cadeia,1000,999,349760
+cadeia,5000,4999,2419552
+compartilhado,100,764,68552
+compartilhado,1000,7964,1442996
+compartilhado,5000,39964,7393052
+ciclo,100,100,32152
+ciclo,1000,1000,349760
+ciclo,5000,5000,2419552

@@ -27,7 +27,7 @@ Ausência de ciclo é necessária para a precedência estrita adotada, mas não 
 
 ## O que existe hoje
 
-A aplicação principal está em `depgraph/`, com entrada `python -m depgraph`. O grafo próprio está em `graph.py`. A interface usa Matplotlib para controles e desenho; estrutura, Kahn, DFS, busca de dependentes e posicionamento do grafo não são delegados ao NetworkX. O exemplo histórico que usa essa biblioteca fica separado em `prototypes/` e não integra o ZIP de revisão.
+A aplicação principal está em `depgraph/`, com entrada `python -m depgraph`. O grafo próprio integrado está em `src/graph/graph.py`. A interface usa Matplotlib para controles e desenho; estrutura, Kahn, DFS, busca de dependentes e posicionamento do grafo não são delegados ao NetworkX. O exemplo histórico que usa essa biblioteca fica separado em `prototypes/` e não integra o ZIP de revisão.
 
 O catálogo é sintético: 27 nomes, 32 versões e dois pacotes inicialmente instalados. No cenário `desktop`, são selecionados 17 pacotes e 26 arestas. Como dois já estavam instalados, existem 15 operações novas. Esses números pertencem a esse cenário; não são limites de capacidade nem resultados gerais de desempenho.
 
@@ -35,7 +35,7 @@ As instalações e atualizações acontecem somente em memória. O programa não
 
 ## Evidências e limites que todos devem saber distinguir
 
-A validação final contém 24 testes e exercita oito cenários com a importação de NetworkX bloqueada. Um oráculo independente conferiu 4.627 grafos pequenos sem divergências. Os experimentos guardam 294 amostras de tempo e nove medições de memória. Esses conjuntos avaliam aspectos diferentes: testes funcionais, comparação com uma decisão independente e desempenho.
+A validação final contém 41 testes e exercita oito cenários com a importação de NetworkX bloqueada. Um oráculo independente conferiu 4.627 grafos pequenos sem divergências. Os experimentos guardam 294 amostras de tempo e nove medições de memória. Esses conjuntos avaliam aspectos diferentes: testes funcionais, comparação com uma decisão independente e desempenho.
 
 Kahn, DFS e busca de dependentes têm tempo O(V + E), sendo V a quantidade de vértices e E a quantidade de arestas. **A resolução completa de versões pode ter custo exponencial.** Nenhum integrante deve atribuir o custo linear dos percursos a toda a aplicação, nem apresentar testes finitos como garantia de ausência de qualquer defeito.
 
@@ -95,7 +95,7 @@ Se o total emitido for menor que V, não existe ordem completa. Os vértices res
 
 A DFS marca vértices como não visitados, ativos e encerrados. Uma aresta para um vértice ativo alcança um ancestral no caminho atual e fecha um ciclo. A implementação retorna esse trecho com o primeiro vértice repetido ao final. Ela percorre todas as componentes e também trata um laço, cujo caminho tem a forma `[v, v]`.
 
-A DFS usa uma pilha explícita de iteradores, evitando a recursão em cadeias profundas. Isso é diferente da busca de versões, que é recursiva. A consulta de dependentes usa uma fila e um conjunto de visitados sobre sucessores, excluindo a origem do resultado. Para sugerir uma remoção em cascata, os dependentes devem aparecer antes de seus pré-requisitos na ordem inversa pertinente.
+A DFS usa uma pilha explícita de iteradores, evitando a recursão em cadeias profundas. Isso é diferente da busca de versões, que é recursiva. A consulta de dependentes usa uma fila e um conjunto de visitados sobre sucessores, registrando vértices alcançados por caminhos de comprimento positivo. Para sugerir uma remoção em cascata, os dependentes devem aparecer antes de seus pré-requisitos na ordem inversa pertinente.
 
 ## Exemplo e complexidade
 
@@ -111,7 +111,7 @@ Cada percurso examina vértices e arestas um número limitado de vezes: O(V + E)
 - Por que uma aresta para um vértice ativo da DFS indica ciclo?
 - Como as consultas preservam o grafo e tratam componentes desconexas?
 
-Consultar [graph.py](../../graph.py), os [testes do grafo](../../test_graph.py) e a [explicação dos algoritmos](../grafo-proprio.md). O oráculo independente, estudado com David Dias Pinto, ajuda a relacionar o argumento teórico às evidências executadas.
+Consultar [graph.py](../../src/graph/graph.py), os [testes do grafo](../../tests/test_graph.py) e a [explicação dos algoritmos](../grafo-proprio.md). O oráculo independente, estudado com David Dias Pinto, ajuda a relacionar o argumento teórico às evidências executadas.
 
 # Arthur Chaves Viana Leão — Resolução de versões, conflitos e transações
 
@@ -151,7 +151,7 @@ A interface bloqueia avanço se o texto do pedido mudar. A sessão bloqueia uma 
 - Qual a diferença entre falha comprovada dentro da política e resultado inconclusivo?
 - Em que instante `installed` muda e o que acontece se a validação final recusar?
 
-Consultar [model.py](../../depgraph/model.py), os [testes de pacotes](../../tests/test_packages.py) e as sequências de [planejamento](../modelagem/imagens/05-sequencia-planejamento.svg) e [confirmação](../modelagem/imagens/06-sequencia-transacao.svg).
+Consultar [resolvedor](../../src/core/resolver.py) e [domínio](../../src/core/domain.py), os [testes de pacotes](../../tests/test_packages.py) e as sequências de [planejamento](../modelagem/imagens/05-sequencia-planejamento.svg) e [confirmação](../modelagem/imagens/06-sequencia-transacao.svg).
 
 # Rafael Abras Lessa Freitas — Interface, visualização e demonstração
 
@@ -203,7 +203,7 @@ Os experimentos usam famílias determinísticas geradas pelo projeto. Cadeias av
 
 ## Três tipos de evidência
 
-Os 24 testes finais são quatro de grafo e vinte de pacotes, transação e interface. Há casos como laços, componentes desconexas, cadeia longa, versões, alternativas, base alterada e recusa na confirmação. Os onze testes do exemplo histórico ficam separados e não devem ser somados como cobertura adicional do núcleo final.
+A suíte soma 28 testes do grafo integrado, quatro da implementação de referência, cinco de cenários de pacotes e quatro de integração. Há casos como laços, componentes desconexas, cadeia longa, versões, alternativas, base alterada e recusa na confirmação. Os onze testes do exemplo histórico ficam separados e não devem ser somados como cobertura adicional do núcleo final.
 
 O oráculo independente compara a existência de uma ordem topológica com a enumeração de permutações dos vértices. São todos os grafos de zero a três vértices, incluindo laços, e os de quatro sem laços, totalizando 4.627. Para cada entrada, também são verificadas as arestas do ciclo devolvido. Zero divergências é uma evidência forte nesse conjunto finito; não é uma enumeração de todos os grafos possíveis nem uma prova completa do resolvedor de versões.
 
@@ -219,11 +219,11 @@ O relógio é `perf_counter_ns`. As tabelas incluem mediana, mínimo, máximo e 
 
 ## O que os resultados permitem concluir
 
-Nas restrições tardias, quatro escolhas exigiram 46 tentativas e mediana próxima de 0,99 ms; oito, 766 e 24,84 ms; doze, 12.286 e 543,82 ms. Todos esses casos encontraram solução. Os números ilustram o crescimento da busca e não representam uma garantia de latência para qualquer entrada ou computador.
+Nas restrições tardias, quatro escolhas exigiram 46 tentativas e mediana próxima de 0,49 ms. Com oito escolhas foram 766 tentativas e 8,08 ms. Com doze foram 12.286 tentativas e 144,22 ms. Todos esses casos encontraram solução. Os números ilustram o crescimento da busca e não representam uma garantia de latência para qualquer entrada ou computador.
 
 A cadeia de 128 pacotes teve mediana de aproximadamente 21,92 ms para a resolução completa. Mesmo sem alternativas, agrupamentos e verificações são refeitos durante a busca; não se deve deduzir linearidade desse fluxo. O argumento O(V + E) dos algoritmos de grafo é apresentado por Caio e se refere aos percursos isolados.
 
-O ambiente e os hashes das fontes medidas ficam registrados. As medições antecederam uma correção em `Session.advance`, que não alterou `Catalog.plan`, o procedimento medido. Uma máquina, poucos tamanhos e dados sintéticos limitam a generalização. Não houve benchmark de interface, comparação com gerenciadores reais ou avaliação de um repositório Debian completo.
+O ambiente e os hashes das fontes medidas ficam registrados. As medições usam o mesmo grafo e resolvedor da CLI e da interface. Uma máquina, poucos tamanhos e dados sintéticos limitam a generalização. Não houve benchmark de interface, comparação com gerenciadores reais ou avaliação de um repositório Debian completo.
 
 ## Perguntas para autoavaliação
 
@@ -268,7 +268,7 @@ O diagrama de estados é uma abstração das combinações de `plan`, `issues`, 
 
 ## Organização dos materiais
 
-O relatório compilado tem 14 páginas nesta revisão, dentro da faixa de 12–15. A versão ainda contém identificação institucional pendente e uma seção de contribuições propostas a substituir por contribuições reais confirmadas. O arquivo de estilo foi obtido de um espelho público e a conferência com o template oficial continua registrada como pendência.
+O relatório compilado tem 14 páginas nesta revisão, dentro da faixa de 12–15. A versão identifica Engenharia de Software, PUC Minas, e registra as contribuições com referências ao Git. O arquivo de estilo foi obtido de um espelho público e a conferência com o template oficial continua registrada como pendência.
 
 João pode coordenar a consistência entre texto, figuras, resultados e slides, mas cada colega precisa fornecer e revisar o conteúdo da própria área. Os slides e os roteiros já existem como base de preparação; a participação de todos, o ensaio e a gravação precisam acontecer de fato. Após editar o artigo, é necessário recompilar e reconferir páginas e legibilidade.
 
@@ -292,13 +292,13 @@ Antes da apresentação, o grupo precisa executar a ferramenta no computador esc
 
 | Item | Situação |
 | --- | --- |
-| Aplicação, grafo próprio, resolução e interface | Implementados; 24 testes e oito cenários aprovados na conferência desta revisão. |
+| Aplicação, grafo próprio, resolução e interface | Implementados; 41 testes e oito cenários aprovados na conferência desta revisão. |
 | Oráculo independente | Reexecutado: 4.627 grafos, zero divergências. |
 | Desempenho | Experimentos e dados brutos disponíveis; números citados pertencem à execução documentada. |
 | UML e documentação técnica | Disponíveis com fontes editáveis; revisão final de leitura e apresentação cabe ao grupo. |
-| Relatório | PDF de 14 páginas e fontes disponíveis para revisão; identificação e contribuições ainda pendentes. |
+| Relatório | PDF de 14 páginas com afiliação, fontes e contribuições registradas. |
 | Slides e materiais de preparação | Disponíveis para estudo e ensaio. |
-| Identificação e contribuições efetivas | Instituição e curso não preenchidos; confirmação dos seis integrantes pendente no registro. |
+| Identificação e contribuições efetivas | Afiliação preenchida e contribuições registradas com os commits. Conferência dos seis integrantes pendente. |
 | Conferência final do estilo SBC e dos materiais | Pendente de revisão do grupo. |
 | Ensaio e demonstração na máquina de apresentação | Sem confirmação registrada. |
 | Vídeo final com todos | Sem gravação ou revisão final registrada. |

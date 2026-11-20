@@ -4,6 +4,7 @@ A referência atual é a [documentação completa](documentacao-completa.md), si
 
 | Documento | Conteúdo |
 | --- | --- |
+| [Modelagem e planejamento da Etapa 1](plano-desenvolvimento.md) | Problema, decisões, dados, UML e plano de desenvolvimento. |
 | [Requisitos](requisitos.md) | Escopo, regras e critérios de aceitação. |
 | [Casos de uso](casos-de-uso.md) | Seis objetivos, pré-condições e alternativas. |
 | [Arquitetura](arquitetura.md) | Classes atuais e possibilidades futuras explicitamente separadas. |

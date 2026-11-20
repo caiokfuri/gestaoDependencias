@@ -27,7 +27,7 @@ def pending_items():
     for name in ('tests/test_packages.py', 'experiments/benchmark.py',
                  'experiments/verificar_grafos.py', 'docs/experimentos/README.md'):
         if not (ROOT / name).is_file():
-            pending.append(f'Contribuição do David ainda não incorporada: {name}.')
+            pending.append(f'Evidência de validação ausente: {name}.')
     data = json.loads((ROOT / 'docs/entrega/equipe.json').read_text())
     for field in ('instituicao', 'curso'):
         if not data.get(field, '').strip():

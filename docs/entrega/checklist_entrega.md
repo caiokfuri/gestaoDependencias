@@ -1,12 +1,13 @@
-# Checklist Oficial de Entrega (22/11 no Canvas)
-Responsável: **Lucas Batista Duarte**
-Atribuição acadêmica: Integração, conformidade e entrega (Tópico 3)
+# Checklist de entrega DepGraph
 
-## Itens Obrigatórios Avaliados pelo Professor:
-- [ ] **Código-fonte próprio:** Grafo próprio implementado em Python puro sem NetworkX.
-- [ ] **Interface Gráfica:** Janela funcional do Matplotlib com os cenários demonstrados.
-- [ ] **Relatório em LaTeX (SBC):** 12 a 15 páginas em formato de artigo SBC.
-- [ ] **Histórico Git:** Repositório com commits individuais de cada um dos 6 membros.
-- [ ] **Vídeo de Demonstração:** 12 a 18 minutos com áudio/vídeo explicando as features e a contribuição de cada aluno.
-- [ ] **Apresentação Oral:** Slides prontos para 10 minutos presencial com todos falando.
-- [ ] **Entrega Individual no Canvas:** **Cada um dos 6 membros** deve postar no seu próprio Canvas o arquivo `.zip` com código, `.tex` e PDF.
+- [x] **Etapa 1** — Documento com problema, justificativa, UML, dados e plano de desenvolvimento.
+- [x] **Etapa 2** — Protótipo Python com grafo próprio, CLI e interface Matplotlib.
+- [x] **Validação** — 41 testes, 4.627 grafos no oráculo e oito cenários renderizados.
+- [x] **Desempenho** — Medições do código integrado com protocolo, CSVs e gráfico.
+- [x] **Relatório** — Fontes SBC e PDF de 14 páginas, com contribuições rastreadas por commit.
+- [x] **Slides** — Resultados atualizados e roteiro presencial de 10 minutos.
+- [ ] **Equipe** — Conferir as contribuições e ensaiar a demonstração presencial.
+- [ ] **Vídeo** — Gravar, revisar a duração de 12 a 18 minutos e conferir a participação dos seis.
+- [ ] **Envio** — Confirmar prazo e canal no Canvas, fechar o ZIP e realizar os seis envios individuais.
+
+Consulte a [matriz do enunciado](../conformidade-enunciado.md) e o [guia do pacote](empacotamento.md).

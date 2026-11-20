@@ -1,6 +1,6 @@
 # Principais modelagens do DepGraph
 
-Revisão de 12/11/2026. As oito figuras abaixo descrevem a aplicação atual em `depgraph/` e `graph.py`. Nomes de classes e métodos seguem o código. Estados e atividades são abstrações explicativas: não implicam a existência de classes ou enumerações adicionais.
+Revisão de 20/11/2026. As oito figuras abaixo descrevem a interface em `depgraph/` e o núcleo integrado em `src/`. Nomes de classes e métodos seguem o código. Estados e atividades são abstrações explicativas: não implicam a existência de classes ou enumerações adicionais.
 
 As propostas arquiteturais anteriores foram preservadas em [historico/uml](historico/uml/), incluindo seu estilo de renderização. Elas não representam a estrutura entregue. As fontes atuais estão em [uml](uml/).
 
@@ -18,7 +18,7 @@ Seis objetivos do usuário: carregar cenário, analisar instalação/atualizaç�
 
 [Fonte](uml/02-classes-dominio.puml) · [SVG](imagens/02-classes-dominio.svg)
 
-`Requirement`, `Package`, `Catalog`, `Plan` e `Issue` correspondem às classes em `depgraph.model`. `Plan.graph` referencia o `Graph` próprio. `success=false` representa falha ou resultado inconclusivo: consultar `issues.kind`, especialmente `limite`. Não existe a enumeração `ResultadoPlano` da proposta anterior.
+`Requirement`, `Package`, `Catalog`, `Plan` e `Issue` correspondem às classes em `src/core/`. `Plan.graph` referencia o `Graph` próprio. `success=false` representa falha ou resultado inconclusivo: consultar `issues.kind`, especialmente `limite`. Não existe a enumeração `ResultadoPlano` da proposta anterior.
 
 As sete multiplicidades de destino representam as coleções e a referência única ao grafo. São associações navegáveis, sem exclusividade de propriedade ou ciclo de vida. A coleção `requests` é desenhada como `0..*` porque a classe pode ser construída programaticamente com lista vazia; a entrada textual da interface exige ao menos um pedido. Multiplicidades inversas não especificadas não afirmam exclusividade.
 
@@ -28,9 +28,9 @@ As sete multiplicidades de destino representam as coleções e a referência ún
 
 [Fonte](uml/03-classes-nucleo.puml) · [SVG](imagens/03-classes-nucleo.svg)
 
-`Catalog` concentra validação, resolução e análise de remoção; `Session` concentra estado e transação. `PackagePreview` mantém uma sessão e o catálogo. Uma sessão pode estar sem plano, e cada plano possui um grafo. Não foram inventadas classes separadas `Resolvedor`, `Transacao` e `AnaliseRemocao`. A mudança de pedido é bloqueada pela interface; alteração da base é bloqueada pela sessão.
+`Catalog` reúne carga, resolução e análise de remoção. `Session` administra estado e valida a transação. `PackagePreview` mantém uma sessão e o catálogo. Uma sessão pode estar sem plano, e cada plano possui um grafo. Não foram inventadas classes separadas `Resolvedor`, `Transacao` e `AnaliseRemocao`. A mudança de pedido é bloqueada pela interface; alteração da base é bloqueada pela sessão.
 
-As cinco multiplicidades de destino são referências mantidas pelos objetos. Dependências tracejadas indicam construção, consulta ou uso de uma exceção, sem multiplicidade de propriedade.
+As cinco multiplicidades de destino são referências mantidas pelos objetos. Dependências tracejadas indicam construção e consulta, sem multiplicidade de propriedade.
 
 ## 4. Componentes e arquivos
 
@@ -38,7 +38,7 @@ As cinco multiplicidades de destino são referências mantidas pelos objetos. De
 
 [Fonte](uml/04-componentes.puml) · [SVG](imagens/04-componentes.svg)
 
-A entrada `python -m depgraph` chama `depgraph.app`. A interface usa o modelo e Matplotlib; `depgraph.model` usa `graph.py` e carrega JSON. O núcleo funciona sem janela. A biblioteca gráfica desenha pontos, setas e controles; não processa o grafo do domínio. NetworkX permanece apenas no exemplo histórico em `prototypes/`.
+A CLI `python -m src.main` e a entrada gráfica `python -m depgraph` compartilham o domínio, o resolvedor e o grafo em `src/`. A interface Matplotlib em `depgraph/app.py` apresenta o resultado e carrega o catálogo `data/pacotes.json` pelo resolvedor.
 
 ## 5. Planejamento
 
@@ -48,7 +48,7 @@ A entrada `python -m depgraph` chama `depgraph.app`. A interface usa o modelo e 
 
 A interface chama `Session.analyze`, que interpreta a entrada e pede um plano ao catálogo. A resolução é recursiva e copia a seleção e os requisitos a cada ramo. Atribuição completa permite executar Kahn; um ciclo produz diagnóstico com caminho da DFS. Limite de recursos significa inconclusão. A análise não modifica os instalados.
 
-`Session.analyze` só substitui o plano e limpa progresso depois que a chamada de planejamento retorna. Exceções de sintaxe ou de base preservam o plano anterior; o pedido editado continua bloqueado pela interface até uma análise bem-sucedida.
+`Session.analyze` redefine a preparação. Uma entrada textual inválida invalida o plano e preserva os instalados. A interface exige nova análise após a edição do pedido.
 
 ## 6. Preparação e confirmação
 
@@ -56,7 +56,7 @@ A interface chama `Session.analyze`, que interpreta a entrada e pede um plano ao
 
 [Fonte](uml/06-sequencia-transacao.puml) · [SVG](imagens/06-sequencia-transacao.svg)
 
-Cada avanço prepara no máximo uma operação. Antes da última preparação, o catálogo valida o estado final completo. Se a validação falhar, instalados, progresso e histórico permanecem como antes do passo; uma tentativa posterior não pula a operação recusada. Após validação, a sessão registra o último preparo e confirma o estado. Pedidos sem operações validam o estado atual e concluem sem alterar os instalados.
+Cada avanço prepara no máximo uma operação. Antes da última preparação, a sessão valida o estado final completo. Se a validação falhar, instalados, progresso e histórico permanecem como antes do passo; uma tentativa posterior não pula a operação recusada. Após validação, a sessão registra o último preparo e confirma o estado. Pedidos sem operações validam o estado atual e concluem sem alterar os instalados.
 
 Plano inválido, pedido editado, base alterada e pré-requisito ausente bloqueiam o avanço. Depois da conclusão, novo avanço retorna sem repetir operações.
 
@@ -66,7 +66,7 @@ Plano inválido, pedido editado, base alterada e pré-requisito ausente bloqueia
 
 [Fonte](uml/07-estados.puml) · [SVG](imagens/07-estados.svg)
 
-Sem plano, bloqueado, inconclusivo, pronto, preparando e concluído são situações derivadas de `plan`, `success`, `issues`, `staged` e `applied`. O desenho não representa uma máquina de estados armazenada no código. Uma reanálise que retorna um plano redefine a preparação; exceções não apagam automaticamente o plano anterior. A vista resume transições relevantes e documenta reanálise em nota, sem enumerar todas as transições entre cada resultado possível.
+Sem plano, bloqueado, inconclusivo, pronto, preparando e concluído são situações derivadas de `plan`, `success`, `issues`, `staged` e `applied`. O desenho não representa uma máquina de estados armazenada no código. Uma reanálise redefine a preparação. Um pedido malformado invalida o plano. A vista resume transições relevantes e documenta reanálise em nota, sem enumerar todas as transições entre cada resultado possível.
 
 ## 8. Atividade da resolução
 

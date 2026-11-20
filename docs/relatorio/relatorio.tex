@@ -7,7 +7,7 @@
 \sloppy
 \title{DepGraph: gestão de conflitos em dependências de pacotes com grafos e algoritmos próprios}
 \author{Lucas Batista Duarte, Caio Alves Kfuri,\\ Arthur Chaves Viana Leão, Rafael Abras Lessa Freitas,\\ David Dias Pinto e Joao Vitor Heleno Marinho}
-\address{Identificação institucional e curso pendentes de confirmação pelo grupo}
+\address{Engenharia de Software -- PUC Minas}
 \newcommand{\figura}[3]{\begin{figure}[ht]\centering\includegraphics[width=\linewidth,height=#2,keepaspectratio]{#1}\caption{#3}\end{figure}}
 \begin{document}
 \maketitle
@@ -17,8 +17,6 @@ DepGraph is an educational package dependency simulator. A custom directed graph
 \begin{resumo}
 O DepGraph simula dependências de pacotes com grafo dirigido próprio, detecção de ciclos, ordenação topológica e análise de remoção. Restrições de versão são resolvidas por busca com retrocesso. Uma interface gráfica explica planos e conflitos, enquanto a execução simulada valida o estado antes da confirmação. Testes, um oráculo independente e experimentos reproduzíveis avaliam a solução. Os resultados distinguem o custo linear dos algoritmos de grafo do custo potencialmente exponencial da busca.
 \end{resumo}
-\noindent\textbf{Versão para revisão.} Os dados institucionais e as contribuições individuais efetivas ainda precisam ser confirmados. Este texto descreve a implementação e os resultados disponíveis em 12/11/2026; não declara a entrega acadêmica concluída.
-
 \clearpage
 \section{Introdução e problema aplicado}
 Instalar uma aplicação pode exigir bibliotecas compartilhadas e versões específicas. O pedido do usuário não basta para determinar uma sequência de execução: primeiro é necessário verificar se todas as restrições podem ser satisfeitas simultaneamente. Uma biblioteca pode ser exigida por dois programas com intervalos incompatíveis, ou as dependências podem formar um ciclo que impede uma precedência estrita.
@@ -42,9 +40,9 @@ A pesquisa consultou a listagem oficial Debian e a especificação de relações
 \section{Modelagem formal e requisitos}
 Sejam $C$ o catálogo, $I$ o mapa de instalados e $P$ a lista de requisitos solicitados. Uma seleção $S$ associa cada nome a no máximo uma versão disponível. A solução deve atender aos pedidos, incluir dependências com versões aceitas e impedir conflitos aplicáveis. Nomes instalados ausentes do pedido mantêm suas versões. Também devem ser preservadas as dependências dos pacotes instalados que continuam no estado final.
 
-O grafo dirigido $G=(V,E)$ possui um vértice por nome selecionado. Uma aresta $(a,b)$ significa que $b$ depende de $a$. A versão é atributo do vértice; restrições são metadados das relações. Essa orientação permite usar diretamente a ordenação topológica como precedência de instalação. Para toda aresta, uma ordem válida $T$ satisfaz $pos_T(a)<pos_T(b)$.
+O grafo dirigido $G=(V,E)$ possui um vértice por nome selecionado. Uma aresta $(a,b)$ significa que $b$ depende de $a$. A versão de cada vértice é consultada na seleção do plano. As restrições ficam nos requisitos dos pacotes. Essa orientação permite usar diretamente a ordenação topológica como precedência de instalação. Para toda aresta, uma ordem válida $T$ satisfaz $pos_T(a)<pos_T(b)$.
 
-As arestas não têm pesos. Dependências compartilhadas geram um único vértice para a biblioteca. Inserções repetidas atualizam atributos e não duplicam a relação. O catálogo contém várias versões; o grafo de um plano contém a atribuição selecionada, e não um vértice independente para cada alternativa disponível.
+As arestas não têm pesos. Dependências compartilhadas geram um único vértice para a biblioteca. Um conjunto de pares evita duplicar arestas. O catálogo contém várias versões; o grafo de um plano contém a atribuição selecionada, e não um vértice independente para cada alternativa disponível.
 
 Conflitos de coexistência são restrições separadas do grafo de precedência. Se um programa exige uma biblioteca com versão menor que 2 e outro exige versão maior ou igual a 2, o pedido é incompatível mesmo quando as dependências formam um DAG. Portanto, Kahn não substitui a resolução de versões.
 
@@ -53,7 +51,7 @@ A lista de operações é uma subsequência da ordem topológica: contém soment
 \begin{table}[ht]\centering\small
 \begin{tabular}{p{.2\linewidth}p{.72\linewidth}}\toprule
 Grupo & Critério de aceitação\\\midrule
-Entrada & Validar catálogo, sintaxe dos pedidos e estado inicial.\\
+Entrada & Ler catálogo, interpretar pedidos e incorporar os nomes já instalados.\\
 Resolução & Uma versão por nome; expansão transitiva; retrocesso sem dependências residuais.\\
 Diagnóstico & Distinguir ausência, versão incompatível, conflito, ciclo e limite inconclusivo.\\
 Grafo & Ordenar todas as dependências ou exibir um ciclo real.\\
@@ -61,7 +59,7 @@ Transação & Preservar instalados durante preparação e falhas; confirmar apen
 Interação & Visualizar, inspecionar, consultar remoção e exportar resultados.\\\bottomrule
 \end{tabular}\caption{Requisitos centrais e seus critérios.}\end{table}
 
-Versões seguem de um a três componentes numéricos. As comparações são normalizadas para três posições: por exemplo, 1.0 e 1.0.0 são equivalentes e não podem aparecer duplicadas no catálogo. Não há interpretação completa de épocas, revisões de distribuição ou alternativas com barra vertical.
+Versões seguem de um a três componentes numéricos. As comparações são normalizadas para três posições: por exemplo, 1.0 e 1.0.0 são equivalentes para comparação. Não há interpretação completa de épocas, revisões de distribuição ou alternativas com barra vertical.
 
 \clearpage
 \section{Casos de uso e classes de domínio}
@@ -73,68 +71,68 @@ O usuário é o único ator externo. Catálogo e estado instalado pertencem ao s
 
 \clearpage
 \section{Arquitetura implementada}
-O núcleo está em \texttt{depgraph.model} e \texttt{graph.py}. \texttt{Catalog} concentra carga, validação, busca de versões e consulta de remoção. \texttt{Session} mantém instalados, plano, preparação e histórico. A interface \texttt{PackagePreview} organiza controles e renderização. Não existem classes separadas \texttt{Resolvedor} e \texttt{Transacao} nesta versão.
+O núcleo usa \texttt{src.core.domain}, \texttt{src.core.resolver} e \texttt{src.graph.graph}. \texttt{Catalog} reúne carga do JSON, busca de versões e consulta de remoção. \texttt{Session} mantém instalados, plano, preparação e histórico. A interface \texttt{PackagePreview} organiza controles e renderização. Não existem classes separadas \texttt{Resolvedor} e \texttt{Transacao} nesta versão.
 \figura{../modelagem/imagens/03-classes-nucleo.png}{14cm}{Classes do núcleo efetivamente implementadas.}
 
-O grafo mantém listas de sucessores e predecessores, além de mapas de atributos dos vértices e das arestas. Consultas não removem vínculos. As coleções são públicas e mutáveis: encapsulamento adicional permanece uma melhoria de manutenção; não se declara imutabilidade dos objetos de resultado.
+O grafo mantém listas de sucessores e predecessores, além de uma lista e um conjunto de arestas. Consultas não removem vínculos. As coleções são públicas e mutáveis: encapsulamento adicional permanece uma melhoria de manutenção; não se declara imutabilidade dos objetos de resultado.
 
 \clearpage
 \subsection{Módulos e responsabilidades}
-A entrada \texttt{python -m depgraph} chama a interface. O modelo não importa a biblioteca gráfica e pode ser usado em testes e experimentos. A interface calcula o posicionamento a partir das gerações de Kahn e utiliza disposição circular quando há ciclos. Pontos, rótulos e setas são desenhados por primitivas Matplotlib.
+\texttt{python -m src.main} abre a CLI e aceita \texttt{--gui}. \texttt{python -m depgraph} abre diretamente a interface. As duas entradas usam o catálogo em \texttt{data/pacotes.json}. O modelo não importa a biblioteca gráfica e pode ser usado em testes e experimentos. A interface calcula o posicionamento a partir das gerações de Kahn e utiliza disposição circular quando há ciclos. Pontos, rótulos e setas são desenhados por primitivas Matplotlib.
 \figura{../modelagem/imagens/04-componentes.png}{8cm}{Dependências entre módulos, biblioteca gráfica e arquivos.}
 
 Os arquivos JSON de catálogo e de relatório têm finalidades diferentes. O primeiro contém versões e relações reabríveis pela ferramenta; o segundo registra o resultado de uma análise e sua execução. A exportação também produz PNG. O estado da sessão é mantido em memória e não é persistido automaticamente entre execuções.
 
-O protótipo histórico com NetworkX fica em \texttt{prototypes/}. Os módulos antigos de pacotes encaminham chamadas à implementação atual para compatibilidade, enquanto o exemplo antigo de tarefas continua separado. O empacotador final utiliza uma lista explícita de arquivos e exclui os protótipos. As dependências finais contêm somente Matplotlib e suas dependências transitivas de interface e desenho.
+A implementação integrada usa estruturas da biblioteca padrão de Python. A distribuição seleciona explicitamente os arquivos da aplicação e da documentação. As dependências finais contêm somente Matplotlib e suas dependências transitivas de interface e desenho.
 
 \section{Política de resolução}
-Pedidos explícitos liberam o respectivo nome para escolha de versão. Os demais instalados são adicionados como requisitos exatos. A busca prefere candidatos maiores e procura uma combinação viável, sem garantir otimização global. Um bloqueio sob essa política não demonstra impossibilidade sob qualquer política de atualização.
+Pedidos explícitos liberam o respectivo nome para escolha de versão. Para os demais nomes instalados, a busca restringe o conjunto de candidatos à versão da base. A busca prefere candidatos maiores e procura uma combinação viável, sem garantir otimização global. Um bloqueio sob essa política não demonstra impossibilidade sob qualquer política de atualização.
 
 Cada ramo recebe uma nova seleção e uma lista ampliada de requisitos. Ao retornar de uma alternativa malsucedida, suas dependências não contaminam o ramo seguinte. A busca verifica limites, versões e conflitos antes de avançar. Atribuições completas são convertidas em grafo e submetidas a Kahn. Se houver ciclo, outra versão ainda pode ser tentada.
 
 \clearpage
 \subsection{Sequência de planejamento}
-A sessão interpreta o texto e pede um plano ao catálogo. A base instalada é validada antes da busca. Um resultado válido ou de falha substitui o plano e limpa a preparação anterior. Exceções de sintaxe ou de base preservam o resultado anterior; o pedido editado permanece bloqueado na interface até nova análise.
+A sessão interpreta o texto e pede um plano ao catálogo. A busca considera os nomes da base instalada e preserva versões conforme a política de atualização. Um novo resultado substitui o plano e limpa a preparação. Um pedido malformado invalida o plano. A interface exige nova análise quando o texto muda.
 \figura{../modelagem/imagens/05-sequencia-planejamento.png}{15cm}{Planejamento, chamadas de busca e construção do grafo.}
 
 O plano usa \texttt{success} e diagnósticos em \texttt{issues}. O tipo \texttt{limite} significa resultado inconclusivo. Um grafo parcial em um diagnóstico serve para explicar o problema e não autoriza operações de instalação.
 
 \clearpage
 \section{Execução segura da simulação}
-Cada avanço confere o pedido na interface e a base na sessão. Os pré-requisitos são procurados em um estado temporário formado pelos instalados e pelos pacotes já preparados. Nenhuma instalação real ocorre. Antes de registrar o último preparo, o catálogo valida o estado final; só então a sessão o confirma.
+Cada avanço confere o pedido na interface e a base na sessão. Os pré-requisitos são procurados em um estado temporário formado pelos instalados e pelos pacotes já preparados. Nenhuma instalação real ocorre. Antes de registrar o último preparo, a sessão valida o estado final; só então a sessão o confirma.
 \figura{../modelagem/imagens/06-sequencia-transacao.png}{15cm}{Validações e confirmação da transação.}
 
 Se a confirmação falhar, os instalados, a lista de preparados e o histórico daquele passo são preservados. Um teste específico reproduz a recusa e confirma que uma nova tentativa executa a operação pendente. Pedidos já atendidos também validam o estado e concluem sem alterações.
 
 \clearpage
 \section{Estados e algoritmos de grafo}
-As situações abaixo são derivadas dos atributos, sem uma enumeração de estados implementada. Uma nova análise que retorna plano redefine o progresso. Exceções não apagam automaticamente um plano anterior. Após concluir, novos avanços não repetem operações.
+As situações abaixo são derivadas dos atributos, sem uma enumeração de estados implementada. Uma nova análise que retorna plano redefine o progresso. Um pedido malformado invalida o plano e preserva os instalados. Após concluir, novos avanços não repetem operações.
 \figura{../modelagem/imagens/07-estados.png}{7cm}{Estados observáveis e condições de avanço.}
 
 \subsection{Ordenação topológica}
 Kahn copia os graus de entrada e inicia uma camada com os vértices de grau zero. Cada vértice emitido reduz o grau de seus sucessores. O invariante é que um vértice só é emitido quando todos os seus predecessores foram processados. Logo, toda aresta aponta de um vértice anterior para um posterior na ordem retornada.
 
-Se menos que $|V|$ vértices forem emitidos, resta um subgrafo sem vértice de grau zero. Seguir predecessores nesse conjunto finito leva a repetição e, portanto, a ciclo. A implementação rejeita a ordem incompleta por \texttt{CycleError}. Os remanescentes não são todos membros de ciclo: alguns podem ser apenas dependentes bloqueados.
+Se menos que $|V|$ vértices forem emitidos, resta um subgrafo sem vértice de grau zero. Seguir predecessores nesse conjunto finito leva a repetição e, portanto, a ciclo. A implementação retorna \texttt{(False, None, None)} ao rejeitar uma ordem incompleta. Os remanescentes não são todos membros de ciclo: alguns podem ser apenas dependentes bloqueados.
 
 \subsection{Detecção de ciclos e dependentes}
 A DFS usa cores branco, cinza e preto e uma pilha explícita de iteradores. Uma aresta para cinza alcança um ancestral no caminho ativo e fecha um ciclo. O diagnóstico copia esse trecho e repete o primeiro vértice no final. A busca percorre todas as componentes e trata laços. Como é iterativa, não depende do limite de recursão para cadeias longas.
 
-A consulta de dependentes percorre sucessores com fila e conjunto de visitados. A origem é excluída do resultado mesmo em ciclos. Para sugerir remoção em cascata, o catálogo filtra a ordem topológica inversa do conjunto afetado. A consulta não modifica instalados.
+A consulta de dependentes percorre sucessores com fila e conjunto de visitados. Em um ciclo, a origem pode aparecer se for alcançada por um caminho de comprimento positivo. A consulta de remoção usa o grafo acíclico dos instalados. Para sugerir remoção em cascata, o catálogo filtra a ordem topológica inversa do conjunto afetado. A consulta não modifica instalados.
 
 \clearpage
 \section{Busca de versões, correção e complexidade}
 A atividade representa uma chamada recursiva, com retornos ao chamador. Diferentemente da DFS de ciclos, o resolvedor usa a pilha de chamadas Python. Versões são tentadas em ordem decrescente; o sucesso encerra a procura.
 \figura{../modelagem/imagens/08-atividade-resolucao.png}{14cm}{Atividade de uma chamada recursiva de resolução.}
 
-Uma solução retornada passou por requisitos, conflitos e aciclicidade. A cópia das estruturas por ramo preserva a independência das alternativas. O procedimento busca viabilidade, sem minimizar operações. Os limites de 20.000 tentativas e seleção de 200 nomes podem encerrar a busca sem decisão; nesse caso não se afirma inexistência de solução.
+Uma solução retornada passou por requisitos, conflitos e aciclicidade. A cópia das estruturas por ramo preserva a independência das alternativas. O procedimento busca viabilidade, sem minimizar operações. O limite padrão de 20.000 tentativas interrompe a busca com diagnóstico inconclusivo.
 
 A representação ocupa $O(V+E)$. Kahn, DFS e dependentes percorrem cada vértice e aresta um número limitado de vezes: tempo $O(V+E)$ e memória auxiliar $O(V)$. A busca de versões pode explorar combinações exponenciais, além dos custos de copiar requisitos e verificar seleções. A resolução completa não herda a linearidade dos algoritmos de grafo.
 
 \clearpage
 \section{Validação e metodologia experimental}
-A suíte final reúne 24 testes: quatro do grafo próprio e vinte de resolução, transação e interface. Abrange vazio, isolados, duplicação, componentes desconexas, laço, cadeia de 3.001 vértices, restrições numéricas, alternativas, estado instalado, limites, falhas e renderização. Os onze testes do exemplo histórico não são contados como cobertura do núcleo final.
+A verificação reúne 41 testes: 28 do grafo integrado, quatro da implementação de referência, cinco de cenários de pacotes e quatro de integração da CLI e da interface. A suíte integrada inclui uma cadeia com 20.001 vértices, preservação do estado em pedidos bloqueados, alternativa de versão e recusa de confirmação. O script exercita oito cenários com importação de NetworkX bloqueada.
 
-Uma verificação independente examina 4.627 grafos: todos com zero a três vértices, incluindo laços, e todos com quatro sem laços. Para cada entrada, a enumeração de permutações decide se existe ordem válida sem usar Kahn ou DFS. A decisão é comparada com os dois algoritmos e cada caminho de ciclo é conferido aresta por aresta. Não houve divergências. Isso reforça a evidência para grafos pequenos, sem constituir prova de toda interação ou catálogo possível.
+Uma verificação independente examina 4.627 grafos: todos com zero a três vértices, incluindo laços, e todos com quatro sem laços. Para cada entrada, a enumeração de permutações decide se existe ordem válida sem usar Kahn ou DFS. A decisão é comparada com os dois algoritmos e valida as camadas de Kahn e confere cada caminho de ciclo aresta por aresta. Não houve divergências. Isso reforça a evidência para grafos pequenos, sem constituir prova de toda interação ou catálogo possível.
 
 Os experimentos de tempo utilizam entradas determinísticas, um aquecimento e sete repetições por configuração. São 294 amostras, com mediana, mínimo, máximo e desvio amostral. Construção, DFS, Kahn e dependentes são medidos separadamente em cadeias, grafos com até oito sucessores por vértice e ciclos, com 100, 1.000 e 5.000 vértices.
 
@@ -142,29 +140,29 @@ O resolvedor recebe cadeias de 16, 64 e 128 pacotes e casos de quatro, oito e do
 
 O relógio utilizado é \texttt{perf\_counter\_ns}. Nove medições separadas de memória registram o pico das alocações Python na construção de grafos por \texttt{tracemalloc}, sem instrumentar os tempos. Não se mede RSS total nem memória do resolvedor ou da interface. Ambiente, dependências e hashes das fontes acompanham os dados brutos em \texttt{docs/experimentos/resultados/ambiente.json}.
 
-Os experimentos foram executados em Python 3.9 em macOS ARM64. Os detalhes exatos ficam no arquivo de ambiente. As medições precedem a correção adicional de confirmação em \texttt{Session}; o procedimento medido, \texttt{Catalog.plan}, não foi alterado por essa correção. Os hashes preservam a identificação das fontes medidas.
+Os experimentos foram executados com Python 3.9.6 em macOS ARM64. O arquivo de ambiente registra a plataforma e os hashes dos arquivos em \texttt{src/} usados na medição. A interface e a linha de comando chamam esse mesmo núcleo.
 
 \subsection{Reprodução}
 Após instalar as dependências da raiz, executar \texttt{python scripts/verificar.py}, que bloqueia NetworkX e exercita testes e oito cenários. O oráculo é reproduzido por \texttt{python -m experiments.verificar\_grafos}. O benchmark é executado por \texttt{python -m experiments.benchmark}; as tabelas e o gráfico, por \texttt{python -m experiments.apresentar}. Os comandos e as limitações são detalhados no protocolo que acompanha a entrega.
 
 \clearpage
 \section{Resultados e discussão}
-\figura{../experimentos/desempenho.png}{8cm}{Tempos medidos separando grafo e resolução com restrições tardias.}
+\figura{../experimentos/desempenho.png}{8cm}{Medianas dos algoritmos de grafo e do resolvedor em cenários com restrições tardias.}
 
 \begin{table}[ht]\centering\small
 \begin{tabular}{lrrr}\toprule
 Caso do resolvedor & Tamanho & Mediana (ms) & Tentativas\\\midrule
-Cadeia & 16 & 0,49 & 16\\
-Cadeia & 64 & 5,64 & 64\\
-Cadeia & 128 & 21,92 & 128\\
-Restrições tardias & 4 & 0,99 & 46\\
-Restrições tardias & 8 & 24,84 & 766\\
-Restrições tardias & 12 & 543,82 & 12.286\\\bottomrule
+Cadeia & 16 & 0,26 & 16\\
+Cadeia & 64 & 1,72 & 64\\
+Cadeia & 128 & 5,32 & 128\\
+Restrições tardias & 4 & 0,49 & 46\\
+Restrições tardias & 8 & 8,08 & 766\\
+Restrições tardias & 12 & 144,22 & 12.286\\\bottomrule
 \end{tabular}\caption{Resumo de uma execução com sete repetições por configuração.}\end{table}
 
 Todos os casos de resolução medidos encontraram solução. O crescimento observado nas restrições tardias acompanha o aumento de combinações exploradas. Mesmo as cadeias com uma única versão não produzem resolução completa linear, pois agrupamentos e verificações são refeitos a cada nível. Os resultados não devem ser apresentados como tempos isolados de Kahn.
 
-As medições de grafo são compatíveis com a análise de seus percursos, mas três tamanhos e uma máquina não provam uma lei assintótica. A família com oito sucessores tem $E$ proporcional a $V$ e não caracteriza um grafo denso de tamanho arbitrário. A dispersão e os valores individuais estão nos CSVs; ruído do sistema e tempos curtos limitam a precisão de interpretações finas.
+Na família com até oito sucessores, Kahn passou de cerca de 0,18 ms em 100 vértices e 764 arestas para 13,82 ms em 5.000 vértices e 39.964 arestas. O aumento acompanha a escala da entrada. Três tamanhos e uma máquina não provam uma lei assintótica. A família com oito sucessores tem $E$ proporcional a $V$ e não caracteriza um grafo denso de tamanho arbitrário. A dispersão e os valores individuais estão nos CSVs; ruído do sistema e tempos curtos limitam a precisão de interpretações finas.
 
 Não houve comparação com gerenciadores reais, benchmark de interface nem experimento com bases externas. O catálogo controlado ajuda a reproduzir falhas, mas não informa frequência real de conflitos ou desempenho em um repositório completo. Essas limitações restringem a generalização das conclusões.
 
@@ -178,10 +176,16 @@ A ferramenta atende às funcionalidades centrais do tema escolhido: modela depen
 
 Permanecem como limitações a sintaxe simplificada de versões, a ausência de alternativas Debian, pacotes virtuais, scripts, múltiplas arquiteturas e persistência da sessão. Não há otimização global nem instalação real. Melhorias futuras incluem encapsular os resultados, separar responsabilidades do catálogo, ampliar o suporte de metadados e validar bases externas com transformação documentada.
 
-\section{Contribuições e situação da entrega}
-A proposta de divisão atribui integração a Lucas, algoritmos de grafo a Caio, resolução e transação a Arthur Chaves Viana Leão, interface a Rafael, dados e experimentos a David Dias Pinto e organização da modelagem e documentação a Joao. \textbf{Essa é uma proposta, não um registro de execução.} Cada integrante deve confirmar suas contribuições efetivas e as respectivas evidências antes de substituir esta seção pela declaração final exigida no enunciado. O arquivo \texttt{docs/entrega/equipe.json} mantém essa pendência explícita.
-
-O relatório e o pacote são materiais para revisão. Ainda dependem do grupo a identificação institucional, a conferência das contribuições, o ensaio, a gravação com participação de todos e as entregas individuais no Canvas. A duração exigida é de dez minutos para apresentação e de doze a dezoito minutos para vídeo. O envio de um integrante não substitui o dos demais.
+\section{Contribuições individuais}
+A divisão de responsabilidades foi identificada nas pastas dos integrantes e conferida com o histórico Git. As contribuições abaixo têm como referência os commits indicados.
+\begin{itemize}
+\item \textbf{Lucas Batista Duarte}. Incorporou a aplicação funcional e os materiais de entrega. No merge, integrou a CLI à interface e ao núcleo compartilhado, com testes de integração. \texttt{36a35c9, 6d18590}.
+\item \textbf{Caio Alves Kfuri}. Implementou a estrutura de grafo dirigido, a ordenação topológica por Kahn, a detecção de ciclos por DFS, a busca de dependentes por BFS e os testes associados. \texttt{05313de, c8af37a, 43511ba, 299fa4e}.
+\item \textbf{Arthur Chaves Viana Leão}. Implementou a resolução de versões por backtracking, a transação simulada com validação do estado final e a análise de impacto da remoção. \texttt{25768b0}.
+\item \textbf{Rafael Abras Lessa Freitas}. Definiu a estrutura inicial da interface e documentou o layout em camadas, a representação dos estados e a interação com os pacotes. \texttt{80c3f67, a72f181, b06771c}.
+\item \textbf{David Dias Pinto}. Incorporou e documentou o catálogo sintético, melhorou a inserção de arestas e os percursos do grafo, adicionou testes de escala e implementou a CLI. \texttt{a1eeeba, 55e7004, 5e6d304}.
+\item \textbf{Joao Vitor Heleno Marinho}. Organizou a documentação de modelagem, os diagramas UML e o registro do protótipo. \texttt{b3e25d8}.
+\end{itemize}
 
 \begin{thebibliography}{9}
 \bibitem[Enunciado]{enunciado} Trabalho Prático: Ferramenta de Processamento de Dados com Grafos. Documento fornecido à turma, \texttt{TP.pdf}, três páginas.

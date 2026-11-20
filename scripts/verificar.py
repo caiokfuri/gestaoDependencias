@@ -18,10 +18,13 @@ def without_networkx(name, *args, **kwargs):
 def main():
     builtins.__import__ = without_networkx
     try:
-        suite = unittest.TestLoader().loadTestsFromNames(['test_graph', 'tests.test_graph', 'tests.test_cli'])
+        suite = unittest.TestLoader().loadTestsFromNames(['test_graph', 'tests.test_graph', 'tests.test_cli', 'tests.test_packages'])
         result = unittest.TextTestRunner(verbosity=2).run(suite)
         if not result.wasSuccessful():
             return 1
+        from experiments.verificar_grafos import verify
+        oracle = verify()
+        print(f"Oráculo: {oracle['grafos']} grafos e {oracle['divergencias']} divergências.")
         from depgraph.app import PackagePreview, SCENARIOS
         import matplotlib.pyplot as plt
         for scenario in SCENARIOS:

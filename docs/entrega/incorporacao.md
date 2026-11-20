@@ -1,5 +1,7 @@
 # Incorporação de trab-grafo
 
+Este registro descreve a integração até os commits de 19/11. O estado dos testes e experimentos após a revisão das etapas está na [conferência com o enunciado](../conformidade-enunciado.md).
+
 Foram incorporados a aplicação funcional (`depgraph/`), o grafo próprio (`graph.py`), seus testes (`test_graph.py`), scripts de verificação e empacotamento, workflow de CI, enunciado, guia, modelagem, relatório SBC e apresentação. Os módulos anteriores de `src/` foram preservados, com a entrada `src/main.py` delegando à aplicação funcional.
 
 ## Escopo reservado ao David

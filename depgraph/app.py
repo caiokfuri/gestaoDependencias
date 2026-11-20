@@ -145,6 +145,8 @@ class PackagePreview:
         destination = Path("outputs/depgraph")
         destination.mkdir(parents=True, exist_ok=True)
         plan = self.session.plan
+        if plan is None:
+            raise ValueError("Analise um pedido antes de exportar.")
         report = {
             "pedido": self.planned_text, "pedido_editado": self.request_box.text,
             "plano_valido": plan.success, "instalados": self.session.installed,
@@ -190,6 +192,11 @@ class PackagePreview:
         ax.clear()
         ax.axis("off")
         plan = self.session.plan
+        self.node_artist = None
+        if plan is None:
+            ax.text(.5, .5, "Analise um pedido válido para ver o grafo.",
+                    ha="center", transform=ax.transAxes)
+            return
         graph = plan.graph
         nodes = list(graph.vertices)
         ax.set_title(f"{len(nodes)} pacotes no plano  /  {len(graph.arestas)} dependências  /  "
@@ -264,6 +271,9 @@ class PackagePreview:
         ax.clear()
         ax.axis("off")
         plan = self.session.plan
+        if plan is None:
+            ax.text(0, .95, "SEM PLANO", color=COLORS["muted"], va="top")
+            return
         title = "TRANSAÇÃO CONCLUÍDA" if self.session.applied else "PLANO VÁLIDO" if plan.success else "INSTALAÇÃO BLOQUEADA"
         ax.text(0, 1, title, fontsize=13, weight="bold", color=COLORS["done"] if plan.success else COLORS["error"], va="top")
         if plan.success:
@@ -290,6 +300,8 @@ class PackagePreview:
         plan = self.session.plan
         if self.inspection:
             lines = self.inspection
+        elif plan is None:
+            lines = ["Informe um pedido válido para iniciar a análise."]
         elif self.session.history:
             lines = ["REGISTRO DA TRANSAÇÃO (últimas operações)"] + self.session.history[-5:]
         elif plan.success:

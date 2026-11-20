@@ -1,0 +1,15 @@
+{
+  "data_utc": "2026-11-20T17:05:22.994640+00:00",
+  "python": "3.9.6",
+  "plataforma": "macOS-26.6.2-arm64-arm-64bit",
+  "processador": "arm",
+  "repeticoes": 7,
+  "commit_base": "6d18590584d5a691e396704750d8c2b1835ab314",
+  "fontes_sha256": {
+    "src/graph/graph.py": "9ee1ee74ad596a3053e7ee52c0d8935c1b22c890a56212dd52262edbfbfbdaf2",
+    "src/core/domain.py": "d66dc4f952ebf5c56b2d1b00bacc4d8caed057a5dd525bac406d7b4c2c2092a8",
+    "src/core/resolver.py": "470758cd24b999e2e99f136550279c69beeb0998100e77ec930c879ed6ab4157",
+    "experiments/benchmark.py": "377b57851c32d0920af7dc449cc6f9165ba9cf53b59bfcd9e66e266fdefe2111"
+  },
+  "observacao": "Fontes identificadas por hash; commit_base pode preceder mudanças locais. Tempos sem tracemalloc; pico Python medido separadamente, uma amostra por entrada. Sem leitura JSON, desenho ou tempo de interface nas medições."
+}

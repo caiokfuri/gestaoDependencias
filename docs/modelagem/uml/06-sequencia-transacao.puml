@@ -4,35 +4,32 @@ title DepGraph — Transação implementada em Session
 actor Usuário as U
 boundary PackagePreview as I
 control Session as S
-entity Catalog as C
 U -> I : Próximo pacote
 alt Pedido editado
  I --> U : Exigir nova análise
 else Pedido inalterado
  I -> S : advance()
  alt Sem plano válido
-  S --> I : ValueError
+  S --> I : RuntimeError
+ else installed diferente do estado esperado
+  S --> I : RuntimeError; exigir análise
  else applied=true
   S --> I : None; nenhuma nova operação
- else installed diferente de plan.base
-  S --> I : ValueError; exigir análise
  else Zero ações pendentes
-  S -> C : validate_state(installed)
+  S -> S : _validar_estado_final(installed)
   alt Validação recusada
-   C --> S : ValueError
    S --> I : Erro; preservar estado e progresso
   else Estado válido
-   S -> S : applied=true
+   S -> S : Confirmar estado e registrar conclusão
    S --> I : None
   end
  else Há ação pendente
   S -> S : Conferir dependências no estado temporário
   alt Pré-requisito inválido
-   S --> I : ValueError; não preparar
+   S --> I : RuntimeError; não preparar
   else Última ação e pré-requisitos satisfeitos
-   S -> C : validate_state(final)
+   S -> S : _validar_estado_final(temporario)
    alt Validação recusada
-    C --> S : ValueError
     S --> I : Erro; preservar installed, staged e history
    else Estado válido
     S -> S : Registrar preparo; confirmar installed;\nmarcar applied; registrar conclusão

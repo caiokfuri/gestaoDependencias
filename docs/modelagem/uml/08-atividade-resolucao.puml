@@ -1,51 +1,39 @@
 @startuml
 !include estilo.puml
-title DepGraph — Uma chamada recursiva de search()
+title DepGraph — Uma chamada recursiva de buscar()
 start
-if (Tentativas >= limite ou selecionados >= 200?) then (sim)
- :Registrar resultado inconclusivo;
- stop
-else (não)
-endif
-:Agrupar requisitos por nome;
-if (Versão selecionada viola requisito\nou há conflito declarado?) then (sim)
- :Registrar falha do ramo;
- stop
-else (não)
-endif
 if (Todos os nomes têm versão?) then (sim)
- :Construir Graph de dependências;
- :Executar kahn();
- if (Há ciclo?) then (sim)
-  :Obter caminho com dfs_cicle();
-  :Registrar falha por ciclo;
+ :Construir Graph e executar kahn();
+ if (Ordem completa?) then (sim)
+  :Retornar seleção, grafo e ordem;
  else (não)
-  :Criar Plan válido com ordem e ações;
+  :Reconstruir ciclo com dfs_ciclo();
+  :Registrar falha e retornar None;
  endif
  stop
 else (não)
+ :Escolher primeiro nome ainda pendente;
 endif
-:Escolher primeiro nome ainda não selecionado;
 :Filtrar candidatos pelas restrições;
-if (Não há candidatos?) then (sim)
- :Registrar versão incompatível ou ausência;
+if (Há candidatos?) then (não)
+ :Registrar ausência ou incompatibilidade de versão;
  stop
-else (não)
 endif
 while (Há candidato não tentado?) is (sim)
- if (Tentativas >= limite?) then (sim)
-  :Registrar resultado inconclusivo;
-  stop
-else (não)
- endif
  :Incrementar tentativas;
- :Chamar search() com nova seleção\ne lista de requisitos ampliada;
- if (Chamada retornou solução?) then (sim)
-  :Retornar solução;
+ if (Tentativas superiores ao limite?) then (sim)
+  :Interromper busca com diagnóstico inconclusivo;
   stop
-else (não)
  endif
- :Tentar candidato seguinte, sem reutilizar\na seleção ou requisitos do ramo falho;
+ if (Conflito ou versão escolhida incompatível?) then (sim)
+  :Registrar diagnóstico do candidato;
+ else (não)
+  :Copiar seleção, ampliar restrições e chamar buscar();
+  if (Chamada retornou solução?) then (sim)
+   :Retornar solução;
+   stop
+  endif
+ endif
 endwhile (não)
 :Retornar None ao chamador;
 stop

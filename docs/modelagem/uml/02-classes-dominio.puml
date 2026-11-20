@@ -16,8 +16,6 @@ class Package {
 class Catalog {
  +packages: dict
  +load(path)
- +get(name, version): Package
- +validate_state(installed)
 }
 class Plan {
  +success: bool

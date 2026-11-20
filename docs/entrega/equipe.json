@@ -1,12 +1,62 @@
 {
-  "instituicao": "",
-  "curso": "",
+  "instituicao": "PUC Minas",
+  "curso": "Engenharia de Software",
   "integrantes": [
-    {"nome": "Lucas Batista Duarte", "contribuicao": "", "evidencias": [], "confirmado": false},
-    {"nome": "Caio Alves Kfuri", "contribuicao": "", "evidencias": [], "confirmado": false},
-    {"nome": "Arthur Chaves Viana Leão", "contribuicao": "", "evidencias": [], "confirmado": false},
-    {"nome": "Rafael Abras Lessa Freitas", "contribuicao": "", "evidencias": [], "confirmado": false},
-    {"nome": "David Dias Pinto", "contribuicao": "", "evidencias": [], "confirmado": false},
-    {"nome": "Joao Vitor Heleno Marinho", "contribuicao": "", "evidencias": [], "confirmado": false}
+    {
+      "nome": "Lucas Batista Duarte",
+      "contribuicao": "Incorporou a aplicação funcional e os materiais de entrega. No merge, integrou a CLI à interface e ao núcleo compartilhado, com testes de integração.",
+      "evidencias": [
+        "36a35c9",
+        "6d18590"
+      ],
+      "confirmado": false
+    },
+    {
+      "nome": "Caio Alves Kfuri",
+      "contribuicao": "Implementou a estrutura de grafo dirigido, a ordenação topológica por Kahn, a detecção de ciclos por DFS, a busca de dependentes por BFS e os testes associados.",
+      "evidencias": [
+        "05313de",
+        "c8af37a",
+        "43511ba",
+        "299fa4e"
+      ],
+      "confirmado": false
+    },
+    {
+      "nome": "Arthur Chaves Viana Leão",
+      "contribuicao": "Implementou a resolução de versões por backtracking, a transação simulada com validação do estado final e a análise de impacto da remoção.",
+      "evidencias": [
+        "25768b0"
+      ],
+      "confirmado": false
+    },
+    {
+      "nome": "Rafael Abras Lessa Freitas",
+      "contribuicao": "Definiu a estrutura inicial da interface e documentou o layout em camadas, a representação dos estados e a interação com os pacotes.",
+      "evidencias": [
+        "80c3f67",
+        "a72f181",
+        "b06771c"
+      ],
+      "confirmado": false
+    },
+    {
+      "nome": "David Dias Pinto",
+      "contribuicao": "Incorporou e documentou o catálogo sintético, melhorou a inserção de arestas e os percursos do grafo, adicionou testes de escala e implementou a CLI.",
+      "evidencias": [
+        "a1eeeba",
+        "55e7004",
+        "5e6d304"
+      ],
+      "confirmado": false
+    },
+    {
+      "nome": "Joao Vitor Heleno Marinho",
+      "contribuicao": "Organizou a documentação de modelagem, os diagramas UML e o registro do protótipo.",
+      "evidencias": [
+        "b3e25d8"
+      ],
+      "confirmado": false
+    }
   ]
 }

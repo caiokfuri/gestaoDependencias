@@ -59,3 +59,23 @@ class IntegrationTests(unittest.TestCase):
                 self.assertTrue(json.loads(report.read_text())['sucesso'])
         finally:
             plt.close(gui.fig)
+
+
+    def test_gui_recovers_after_invalid_request(self):
+        import matplotlib.pyplot as plt
+        from depgraph.app import PackagePreview
+
+        gui = PackagePreview()
+        try:
+            gui.request_box.set_val('???')
+            with self.assertRaises(ValueError) as error:
+                gui.analyze()
+            gui.render(str(error.exception), error=True)
+            gui.fig.canvas.draw()
+            self.assertIsNone(gui.session.plan)
+            with self.assertRaises(ValueError):
+                gui.advance()
+            gui.load_scenario('desktop')
+            self.assertTrue(gui.session.plan.success)
+        finally:
+            plt.close(gui.fig)

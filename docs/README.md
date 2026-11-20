@@ -1,6 +1,6 @@
 # Documentação do projeto
 
-A aplicação funcional foi incorporada de `trab-grafo`. Consulte o [registro da incorporação](entrega/incorporacao.md) para o escopo reservado ao David. O catálogo e sua documentação estão em [data/](../data/README.md). Os experimentos aguardam sua contribuição; números do relatório e slides são registros da versão de origem. O guia de empacotamento está em [entrega/empacotamento.md](entrega/empacotamento.md).
+A aplicação integrada usa o catálogo em [data/](../data/README.md). O relatório e os slides usam as [medições do núcleo integrado](experimentos/README.md). Confira a [situação das três etapas](conformidade-enunciado.md) e o [guia de empacotamento](entrega/empacotamento.md).
 
 O foco atual é o **DepGraph**, simulador de conflitos em dependências entre pacotes inspirado no Linux.
 

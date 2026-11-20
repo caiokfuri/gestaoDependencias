@@ -61,8 +61,8 @@ class Graph:
     def kahn(self):
         """
         Implementa o algoritmo de Kahn para ordenação topológica.
-        Retorna uma lista de vértices em ordem topológica se o grafo for acíclico.
-        Caso contrário, retorna None indicando a presença de ciclos.
+        Retorna (True, ordem, camadas) para um grafo acíclico.
+        Quando há ciclo, retorna (False, None, None).
         """
         graus = {v: self.grau_entrada(v) for v in self.vertices}
         fila = [v for v in self.vertices if graus[v] == 0]
@@ -82,7 +82,7 @@ class Graph:
                         proximo_fila.append(v)
             fila = proximo_fila
 
-        if(len(ordem) == len(self.vertices)):
+        if len(ordem) == len(self.vertices):
             return True, ordem, camadas
         return False, None, None
 
@@ -144,18 +144,13 @@ class Graph:
         if v not in self.vertices:
             return set()
 
-        visitados = set()
-        # Começa com os dependentes diretos de v
-        # deque: popleft em O(1); list.pop(0) seria O(n) por remoção
-        fila = deque(self.vertices.get(v, []))
-
+        # Uma origem alcançada por um caminho não vazio também é visitada.
+        visitados = set(self.vertices[v])
+        fila = deque(self.vertices[v])
         while fila:
-            atual = fila.popleft()  # Tira o primeiro da fila
-            if atual not in visitados:
-                visitados.add(atual)
-                # Adiciona na fila os dependentes de 'atual' para continuar a onda
-                for proximo in self.vertices.get(atual, []):
-                    if proximo not in visitados:
-                        fila.append(proximo)
-
+            atual = fila.popleft()
+            for proximo in self.vertices[atual]:
+                if proximo not in visitados:
+                    visitados.add(proximo)
+                    fila.append(proximo)
         return visitados

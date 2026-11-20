@@ -25,7 +25,8 @@ note bottom of Desatualizado
  Estado observado pela interface/validações,
  sem enumeração de estados armazenada.
  Reanálise válida redefine plano e preparação.
- Exceções não apagam automaticamente o plano anterior.
+ Pedido malformado invalida plano e preparação.
+ installed permanece intacto.
 end note
 note bottom of Preparando
  Exceção de pré-requisito bloqueia o passo.

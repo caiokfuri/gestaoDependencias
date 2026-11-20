@@ -142,16 +142,18 @@ class Session:
                 if versao is None or not dep.accepts(versao):
                     raise RuntimeError(f"Pré-requisito não atendido para {nome} {pkg.version}: "
                                        f"{dep.name} {dep.spec}.")
-            self.staged.append(nome)
             temporario[nome] = pkg.version
+            if len(pendentes) == 1:
+                self._validar_estado_final(temporario)
+            self.staged.append(nome)
             acao = "Atualizado" if nome in plan.base else "Preparado"
             self.history.append(f"{acao}: {nome} {pkg.version}")
             preparado = nome
             if len(pendentes) > 1:
                 return preparado
 
-        # Última operação preparada (ou plano sem operações): valida o estado final.
-        self._validar_estado_final(temporario)
+        if not pendentes:
+            self._validar_estado_final(temporario)
         self.installed = temporario
         self.applied = True
         self.history.append("Transação concluída.")

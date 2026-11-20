@@ -1,6 +1,6 @@
 # DepGraph — Documentação completa da aplicação e da modelagem
 
-Consolidação: **12/11/2026**. A aplicação em `depgraph/` utiliza `graph.py` próprio e Matplotlib para interface. Este documento reúne escopo, requisitos, casos de uso, oito diagramas da implementação atual, contratos, dados, algoritmos e validação. As propostas arquiteturais anteriores permanecem em `historico/uml/`. Esta documentação não substitui o relatório LaTeX/SBC.
+Consolidação: **20/11/2026**. A interface em `depgraph/` utiliza o núcleo em `src/core/` e o grafo próprio em `src/graph/`. Este documento reúne escopo, requisitos, casos de uso, oito diagramas da implementação atual, contratos, dados, algoritmos e validação. As propostas arquiteturais anteriores permanecem em `historico/uml/`. Esta documentação não substitui o relatório LaTeX/SBC.
 
 As fontes das figuras ficam em [uml/](uml/) e as imagens em [imagens/](imagens/). Os documentos temáticos continuam como fontes de manutenção dos respectivos assuntos; alterações neles devem ser refletidas nesta consolidação. Os diagramas PlantUML são a referência visual; os exemplos Mermaid anteriores são introdutórios.
 
@@ -205,7 +205,7 @@ Seis objetivos do usuário: carregar cenário, analisar instalação/atualizaç�
 
 [Fonte](uml/02-classes-dominio.puml) · [SVG](imagens/02-classes-dominio.svg)
 
-`Requirement`, `Package`, `Catalog`, `Plan` e `Issue` correspondem às classes em `depgraph.model`. `Plan.graph` referencia o `Graph` próprio. `success=false` representa falha ou resultado inconclusivo: consultar `issues.kind`, especialmente `limite`. Não existe a enumeração `ResultadoPlano` da proposta anterior.
+`Requirement`, `Package`, `Catalog`, `Plan` e `Issue` correspondem às classes em `src/core/`. `Plan.graph` referencia o `Graph` próprio. `success=false` representa falha ou resultado inconclusivo: consultar `issues.kind`, especialmente `limite`. Não existe a enumeração `ResultadoPlano` da proposta anterior.
 
 As sete multiplicidades de destino representam as coleções e a referência única ao grafo. São associações navegáveis, sem exclusividade de propriedade ou ciclo de vida. A coleção `requests` é desenhada como `0..*` porque a classe pode ser construída programaticamente com lista vazia; a entrada textual da interface exige ao menos um pedido. Multiplicidades inversas não especificadas não afirmam exclusividade.
 
@@ -215,9 +215,9 @@ As sete multiplicidades de destino representam as coleções e a referência ún
 
 [Fonte](uml/03-classes-nucleo.puml) · [SVG](imagens/03-classes-nucleo.svg)
 
-`Catalog` concentra validação, resolução e análise de remoção; `Session` concentra estado e transação. `PackagePreview` mantém uma sessão e o catálogo. Uma sessão pode estar sem plano, e cada plano possui um grafo. Não foram inventadas classes separadas `Resolvedor`, `Transacao` e `AnaliseRemocao`. A mudança de pedido é bloqueada pela interface; alteração da base é bloqueada pela sessão.
+`Catalog` reúne carga, resolução e análise de remoção. `Session` administra estado e valida a transação. `PackagePreview` mantém uma sessão e o catálogo. Uma sessão pode estar sem plano, e cada plano possui um grafo. Não foram inventadas classes separadas `Resolvedor`, `Transacao` e `AnaliseRemocao`. A mudança de pedido é bloqueada pela interface; alteração da base é bloqueada pela sessão.
 
-As cinco multiplicidades de destino são referências mantidas pelos objetos. Dependências tracejadas indicam construção, consulta ou uso de uma exceção, sem multiplicidade de propriedade.
+As cinco multiplicidades de destino são referências mantidas pelos objetos. Dependências tracejadas indicam construção e consulta, sem multiplicidade de propriedade.
 
 ### 4. Componentes e arquivos
 
@@ -225,7 +225,7 @@ As cinco multiplicidades de destino são referências mantidas pelos objetos. De
 
 [Fonte](uml/04-componentes.puml) · [SVG](imagens/04-componentes.svg)
 
-A entrada `python -m depgraph` chama `depgraph.app`. A interface usa o modelo e Matplotlib; `depgraph.model` usa `graph.py` e carrega JSON. O núcleo funciona sem janela. A biblioteca gráfica desenha pontos, setas e controles; não processa o grafo do domínio. NetworkX permanece apenas no exemplo histórico em `prototypes/`.
+A CLI `python -m src.main` e a entrada gráfica `python -m depgraph` compartilham o domínio, o resolvedor e o grafo em `src/`. A interface Matplotlib em `depgraph/app.py` apresenta o resultado e carrega o catálogo `data/pacotes.json` pelo resolvedor.
 
 ### 5. Planejamento
 
@@ -235,7 +235,7 @@ A entrada `python -m depgraph` chama `depgraph.app`. A interface usa o modelo e 
 
 A interface chama `Session.analyze`, que interpreta a entrada e pede um plano ao catálogo. A resolução é recursiva e copia a seleção e os requisitos a cada ramo. Atribuição completa permite executar Kahn; um ciclo produz diagnóstico com caminho da DFS. Limite de recursos significa inconclusão. A análise não modifica os instalados.
 
-`Session.analyze` só substitui o plano e limpa progresso depois que a chamada de planejamento retorna. Exceções de sintaxe ou de base preservam o plano anterior; o pedido editado continua bloqueado pela interface até uma análise bem-sucedida.
+`Session.analyze` redefine a preparação. Uma entrada textual inválida invalida o plano e preserva os instalados. A interface exige nova análise após a edição do pedido.
 
 ### 6. Preparação e confirmação
 
@@ -243,7 +243,7 @@ A interface chama `Session.analyze`, que interpreta a entrada e pede um plano ao
 
 [Fonte](uml/06-sequencia-transacao.puml) · [SVG](imagens/06-sequencia-transacao.svg)
 
-Cada avanço prepara no máximo uma operação. Antes da última preparação, o catálogo valida o estado final completo. Se a validação falhar, instalados, progresso e histórico permanecem como antes do passo; uma tentativa posterior não pula a operação recusada. Após validação, a sessão registra o último preparo e confirma o estado. Pedidos sem operações validam o estado atual e concluem sem alterar os instalados.
+Cada avanço prepara no máximo uma operação. Antes da última preparação, a sessão valida o estado final completo. Se a validação falhar, instalados, progresso e histórico permanecem como antes do passo; uma tentativa posterior não pula a operação recusada. Após validação, a sessão registra o último preparo e confirma o estado. Pedidos sem operações validam o estado atual e concluem sem alterar os instalados.
 
 Plano inválido, pedido editado, base alterada e pré-requisito ausente bloqueiam o avanço. Depois da conclusão, novo avanço retorna sem repetir operações.
 
@@ -253,7 +253,7 @@ Plano inválido, pedido editado, base alterada e pré-requisito ausente bloqueia
 
 [Fonte](uml/07-estados.puml) · [SVG](imagens/07-estados.svg)
 
-Sem plano, bloqueado, inconclusivo, pronto, preparando e concluído são situações derivadas de `plan`, `success`, `issues`, `staged` e `applied`. O desenho não representa uma máquina de estados armazenada no código. Uma reanálise que retorna um plano redefine a preparação; exceções não apagam automaticamente o plano anterior. A vista resume transições relevantes e documenta reanálise em nota, sem enumerar todas as transições entre cada resultado possível.
+Sem plano, bloqueado, inconclusivo, pronto, preparando e concluído são situações derivadas de `plan`, `success`, `issues`, `staged` e `applied`. O desenho não representa uma máquina de estados armazenada no código. Uma reanálise redefine a preparação. Um pedido malformado invalida o plano. A vista resume transições relevantes e documenta reanálise em nota, sem enumerar todas as transições entre cada resultado possível.
 
 ### 8. Atividade da resolução
 
@@ -285,12 +285,12 @@ As classes de domínio têm sete multiplicidades explícitas, e as classes do n�
 
 | Operação real | Contrato |
 | --- | --- |
-| Catalog.load(path) | Carrega e valida o catálogo e o estado inicial; retorna catálogo e mapa de instalados. |
-| Catalog.plan(requests, installed, limit) | Preserva a base; busca seleção compatível ou retorna falha/inconclusão com diagnóstico. Base inválida lança erro. |
-| Graph.kahn() | Retorna uma ordem completa ou lança CycleError, sem alterar o grafo. |
-| Graph.dfs_cicle() | Retorna lista vazia ou caminho fechado real; percorre todas as componentes. |
+| Catalog.load(path) | Lê o JSON, indexa as versões por nome e retorna o catálogo e o mapa de instalados. |
+| Catalog.plan(requests, installed, limit) | Usa a base para buscar seleção compatível e retorna plano válido, bloqueado ou inconclusivo. |
+| Graph.kahn() | Retorna `(True, ordem, camadas)` ou `(False, None, None)`. |
+| Graph.dfs_ciclo() | Retorna `None` em grafo acíclico ou um caminho fechado real. |
 | Catalog.removal_impact(name, installed) | Retorna dependentes e ordem inversa; não aplica remoção. |
-| Session.analyze(text) | Substitui plano e limpa progresso quando o planejamento retorna; exceções preservam o resultado anterior. |
+| Session.analyze(text) | Substitui plano e limpa preparo. Um pedido inválido invalida o plano. |
 | Session.advance() | Confere pré-requisitos; prepara uma operação; valida antes de confirmar o último passo. Uma recusa preserva estado, progresso e histórico daquele passo. |
 | PackagePreview.advance() | Exige texto igual ao pedido analisado antes de chamar a sessão. |
 
@@ -329,7 +329,7 @@ Exemplo mínimo válido, reduzido a nomes existentes no catálogo:
 }
 ```
 
-O catálogo completo está em [pacotes.json](../../depgraph/examples/pacotes.json). Não é um espelho de uma distribuição Linux. A validação aceita dependências ausentes no catálogo para permitir cenários de erro; o resolvedor deve diagnosticá-las ao analisar um pedido afetado. Já o estado inicialmente instalado precisa ser consistente.
+O catálogo completo está em [pacotes.json](../../data/pacotes.json). Não é um espelho de uma distribuição Linux. A validação aceita dependências ausentes no catálogo para permitir cenários de erro; o resolvedor deve diagnosticá-las ao analisar um pedido afetado. Já o estado inicialmente instalado precisa ser consistente.
 
 Nomes seguem o padrão `[a-z0-9][a-z0-9+.-]*`. Versões têm um a três componentes numéricos, normalizados para comparação: `1.10` é maior que `1.9`. As restrições aceitam `=`, `==`, `>`, `>=`, `<` e `<=`; o modelo de requisitos permite combinar condições como `>=1.0,<2.0`.
 
@@ -406,7 +406,7 @@ Complementar os cenários de referência com grafo vazio, vértice isolado, laç
 
 Os testes atuais estão em [test_packages.py](../../tests/test_packages.py) e [test_preview.py](../../prototypes/networkx_preview/test_preview.py). A segunda suíte cobre o exemplo histórico de tarefas; seus resultados não representam cobertura adicional do núcleo final de pacotes.
 
-Nos experimentos, variar nomes, versões por nome, quantidade de arestas, compartilhamento e tipos de conflito. Fixar sementes, registrar ambiente e versões, repetir medições e reportar dispersão. Comparações com NetworkX devem ficar isoladas do funcionamento final. Há 294 medições de tempo, nove de memória, tabelas e gráfico no [protocolo experimental](../experimentos/README.md). A suíte final contém 24 testes e o oráculo reproduzível conferiu 4.627 grafos sem divergência.
+Nos experimentos, variar nomes, versões por nome, quantidade de arestas, compartilhamento e tipos de conflito. Fixar sementes, registrar ambiente e versões, repetir medições e reportar dispersão. Comparações com NetworkX devem ficar isoladas do funcionamento final. Há 294 medições de tempo, nove de memória, tabelas e gráfico no [protocolo experimental](../experimentos/README.md). A suíte final contém 41 testes e o oráculo reproduzível conferiu 4.627 grafos sem divergência.
 
 As figuras foram renderizadas e revisadas conforme o [registro de revisão](revisao-dos-diagramas.md). Essa verificação cobre os artefatos de modelagem, não executa testes da aplicação.
 

@@ -5,7 +5,7 @@ As fontes e figuras atuais são as vistas 05 a 08 de [modelagens-principais.md](
 - Planejamento: `PackagePreview.analyze` → `Session.analyze` → `Catalog.plan`, com chamadas recursivas de `search` e consultas ao `Graph` próprio.
 - Execução: `PackagePreview.advance` verifica o texto do pedido; `Session.advance` verifica plano, conclusão, base e pré-requisitos. Antes de confirmar a última operação, valida o estado final.
 - Falhas: análise não modifica instalados; falha de confirmação não modifica instalados, preparação nem histórico daquele passo.
-- Reanálise: um novo resultado substitui o plano e limpa preparação e histórico; exceção preserva o resultado anterior.
+- Reanálise: um novo resultado substitui o plano e limpa a preparação. O histórico permanece na sessão. Uma entrada inválida invalida o plano.
 - Estados: são situações observáveis derivadas dos atributos, não uma enumeração implementada.
 - Remoção: consulta dependentes e ordem inversa, sem aplicar remoções.
 

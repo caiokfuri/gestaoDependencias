@@ -17,27 +17,25 @@ class Session {
  +history: list
  +analyze(text): Plan
  +advance()
+ -_validar_estado_final(estado)
 }
 class Catalog {
  +packages: dict
  +plan(requests, installed, limit): Plan
- +validate_state(installed)
  +removal_impact(name, installed)
 }
 class Graph {
  +vertices: dict
  +predecessores: dict
- +nodes: dict
- +edges: dict
+ +arestas: list
+ -_arestas_set: set
  +add_vertice(v)
  +add_aresta(u, v)
- +geracoes(): list
- +kahn(): list
- +dfs_cicle(): list
- +dependentes(v): set
+ +kahn(): tuple
+ +dfs_ciclo(): list ou None
+ +dependentes_transitivos(v): set
 }
 class Plan
-class CycleError
 PackagePreview --> "1" Session : session
 PackagePreview --> "1" Catalog : catalog
 Session --> "1" Catalog : catalog
@@ -45,7 +43,6 @@ Session --> "0..1" Plan : plan
 Catalog ..> Graph : constrói e consulta
 Plan --> "1" Graph : graph
 PackagePreview ..> Graph : layout próprio
-Graph ..> CycleError : lança em Kahn
 note bottom of Session
  Transação é responsabilidade de Session.
  Não há classe Transacao ou Resolvedor separada.

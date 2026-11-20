@@ -3,18 +3,26 @@
 !pragma layout elk
 skinparam packageStyle rectangle
 title DepGraph — Módulos implementados
-component "depgraph.__main__\nentrada: python -m depgraph" as Entry
+component "src.main\nterminal e --gui" as Entry
+component "depgraph.__main__\nentrada gráfica direta" as Direct
 component "depgraph.app\ninterface, cenários, exportação" as UI
 component "Matplotlib\nprimitivas de desenho e controles" as Plot
-component "depgraph.model\ncatálogo, busca, plano e sessão" as Core
-component "graph.py\nGraph, DFS, Kahn e dependentes" as G
-artifact "depgraph/examples/pacotes.json" as Data
+component "src.core.resolver\ncatálogo e busca" as Core
+component "src.core.domain\nplano e sessão" as Domain
+component "src.graph.graph\nGraph, DFS, Kahn e dependentes" as G
+artifact "data/pacotes.json" as Data
 artifact "outputs/depgraph\nJSON e PNG" as Out
-Entry ..> UI
+Entry ..> UI : PackageGUI
+Entry ..> Core
+Entry ..> Domain
+Direct ..> UI
 UI ..> Core
+UI ..> Domain
 UI ..> Plot
 UI ..> Out
+Core ..> Domain
 Core ..> G
+Domain ..> G
 Core ..> Data
 note bottom of G
  Estruturas e algoritmos próprios.

@@ -1,6 +1,6 @@
 @startuml
 !include estilo.puml
-title DepGraph — Planejamento implementado
+title DepGraph — Planejamento
 actor Usuário as U
 boundary PackagePreview as I
 control Session as S
@@ -8,39 +8,28 @@ entity Catalog as C
 participant Graph as G
 U -> I : Analisar instalação
 I -> S : analyze(request_box.text)
-S -> S : parse_requests(text)
-alt Sintaxe inválida
- S --> I : ValueError; planned_text não é atualizado
-else Sintaxe válida
- S -> C : plan(requests, installed)
- C -> C : validate_state(installed)
- alt Base inválida
-  C --> S : ValueError
-  S --> I : Erro; sem novo resultado
- else Base válida
-  loop search(selected, requirements): chamadas recursivas
-   C -> C : Verificar limite, requisitos e conflitos
-   alt Atribuição completa
-    C -> G : Construir grafo; kahn()
-    opt CycleError
-     C -> G : dfs_cicle()
-     G --> C : Caminho de ciclo real
-    end
-   else Nome ainda sem versão
-    C -> C : Tentar candidatos em ordem decrescente
-    C -> C : search(cópia da seleção, requisitos ampliados)
+S -> S : Interpretar nomes e restrições
+alt Pedido inválido
+ S -> S : Invalidar plano e preparação
+ S --> I : ValueError
+else Pedido válido
+ S -> C : plan(requests, cópia de installed)
+ loop Busca por versões
+  C -> C : Verificar candidatos, restrições e conflitos
+  alt Seleção completa
+   C -> G : Montar grafo e chamar kahn()
+   G --> C : sucesso, ordem, camadas
+   opt sucesso=false
+    C -> G : dfs_ciclo()
+    G --> C : Caminho fechado
    end
+  else Nome pendente
+   C -> C : Tentar próximo candidato com cópias de ramo
   end
-  C --> S : Plan válido ou falha; limite é inconclusivo
-  S -> S : Atribuir plan; limpar staged e history; applied=false
-  S --> I : Plan
-  I -> I : Atualizar planned_text após análise retornada
  end
+ C --> S : Plan válido, bloqueado ou inconclusivo
+ S --> I : Plan
+ I -> I : Atualizar planned_text e redesenhar
 end
-I --> U : Plano ou diagnóstico
-note over I,S
- Edição do pedido é verificada na interface antes de avançar.
- Uma exceção de análise não substitui o plano anterior na sessão.
- A análise não modifica installed.
-end note
+I --> U : Plano ou mensagem de erro
 @enduml
